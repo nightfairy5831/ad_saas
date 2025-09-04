@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Request from '@/lib/request'
 
 type PricingPlan = {
   id: string
@@ -73,23 +74,21 @@ export default function SubscriptionPage() {
     setSelectedPlan(plan.id)
     
     try {
-      // TODO: Implement Stripe checkout session creation
-      console.log('Creating checkout session for:', plan)
+      // Create Stripe checkout session
+      const response = await Request.Post('/api/stripe/create-checkout-session', {
+        priceId: plan.stripePriceId,
+        planId: plan.id,
+        interval: billingInterval
+      })
       
-      // This would typically call your API endpoint to create a Stripe checkout session
-      // const response = await fetch('/api/stripe/create-checkout-session', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     priceId: plan.stripePriceId,
-      //     planId: plan.id
-      //   })
-      // })
-      // const { sessionUrl } = await response.json()
-      // window.location.href = sessionUrl
+      // Redirect to Stripe checkout
+      if (response.sessionUrl) {
+        window.location.href = response.sessionUrl
+      }
       
     } catch (error) {
       console.error('Subscription error:', error)
+      // TODO: Show error toast/notification
     } finally {
       setIsLoading(false)
       setSelectedPlan(null)
