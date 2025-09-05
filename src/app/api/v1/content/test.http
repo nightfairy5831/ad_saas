@@ -1,0 +1,42 @@
+### Test content API with summer_sale campaign
+POST http://localhost:3000/api/v1/content
+Content-Type: application/json
+
+{
+  "utm_campaign": "summer_sale",
+  "utm_source": "facebook"
+}
+
+### Test with shoe buyers segment
+POST http://localhost:3000/api/v1/content
+Content-Type: application/json
+
+{
+  "utm_source": "google",
+  "utm_content": "shoes"
+}
+
+### Test with Facebook visitors
+POST http://localhost:3000/api/v1/content
+Content-Type: application/json
+
+{
+  "fbclid": "123456789"
+}
+
+### Test with Google Ads
+POST http://localhost:3000/api/v1/content
+Content-Type: application/json
+
+{
+  "gclid": "abc123xyz"
+}
+
+### Test with email subscribers
+POST http://localhost:3000/api/v1/content
+Content-Type: application/json
+
+{
+  "utm_source": "email",
+  "utm_campaign": "newsletter"
+}
