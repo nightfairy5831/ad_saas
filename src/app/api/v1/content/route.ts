@@ -1,6 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { redis, CACHE_TTL } from '@/lib/redis'
 import { mockSegments, mockVariants } from '@/lib/mockdata'
+import { handleCorsOptions, withCors } from '@/lib/cors'
+
+export async function OPTIONS() {
+  return handleCorsOptions()
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +18,7 @@ export async function POST(request: NextRequest) {
     // Try to get from cache first
     const cached = await redis.get(cacheKey)
     if (cached) {
-      return NextResponse.json(cached)
+      return withCors(cached)
     }
 
     // Find matching segment based on UTM parameters
@@ -41,10 +46,7 @@ export async function POST(request: NextRequest) {
     const variant = mockVariants.find(v => v.segment_name === selectedSegment.name)
 
     if (!variant) {
-      return NextResponse.json(
-        { error: 'No content variant found for segment' },
-        { status: 404 }
-      )
+      return withCors({ error: 'No content variant found for segment' }, 404)
     }
 
     // Prepare response
@@ -61,12 +63,9 @@ export async function POST(request: NextRequest) {
     // Cache the response
     await redis.set(cacheKey, response, { ex: CACHE_TTL })
 
-    return NextResponse.json(response)
+    return withCors(response)
   } catch (error) {
     console.error('Error fetching content:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return withCors({ error: 'Internal server error' }, 500)
   }
 }
