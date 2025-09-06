@@ -1,4 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { handleCorsOptions, withCors } from '@/lib/cors'
+
+export async function OPTIONS() {
+  return handleCorsOptions()
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,12 +23,9 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     }
 
-    return NextResponse.json(response)
+    return withCors(response)
   } catch (error) {
     console.error('Error processing event:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return withCors({ error: 'Internal server error' }, 500)
   }
 }
