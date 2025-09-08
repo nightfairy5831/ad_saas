@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, BarChart3, Globe, Code, Zap, Grid3X3, List, Eye, EyeOff, Settings, Check, X } from 'lucide-react';
+import { CampaignCard } from '@/components/CampaignCard';
+import { CampaignRowView } from '@/components/CampaignRowView';
 import { CampaignCreator } from '@/components/CampaignCreator';
 import { CopyVariationEditor } from '@/components/CopyVariationEditor';
 import { UTMGenerator } from '@/components/UTMGenerator';
@@ -432,48 +433,16 @@ export default function DashboardPage() {
               {campaigns
                 .filter(campaign => !(hideTestCampaign && campaign.id === 'test-campaign'))
                 .map((campaign) => (
-                  <Card key={campaign.id} className="shadow-sm">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                        <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-                          {campaign.status}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <div className="text-sm text-muted-foreground">Clicks</div>
-                            <div className="text-xl font-bold">{campaign.clicks.toLocaleString()}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">Conversions</div>
-                            <div className="text-xl font-bold">{campaign.conversions}</div>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditCampaign(campaign)}
-                          >
-                            Edit
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              window.location.href = '/analytics';
-                            }}
-                          >
-                            Analytics
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <CampaignCard
+                    key={campaign.id}
+                    campaign={campaign}
+                    onClick={() => setSelectedCampaign(campaign)}
+                    onEdit={() => handleEditCampaign(campaign)}
+                    onViewAnalytics={() => {
+                      window.location.href = '/analytics';
+                    }}
+                    baseUrl={campaign.landingPageUrl || landingPageUrl}
+                  />
                 ))}
             </div>
           ) : (
@@ -490,51 +459,27 @@ export default function DashboardPage() {
               {campaigns
                 .filter(campaign => !(hideTestCampaign && campaign.id === 'test-campaign'))
                 .map((campaign) => (
-                  <div key={campaign.id} className="grid grid-cols-12 gap-4 px-4 py-3 border rounded-lg">
-                    <div className="col-span-3">
-                      <div className="font-medium">{campaign.name}</div>
-                      <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'} className="text-xs">
-                        {campaign.status}
-                      </Badge>
-                    </div>
-                    <div className="col-span-3">
-                      <div className="text-sm text-muted-foreground truncate">
-                        {campaign.copyVariations.headline}
-                      </div>
-                    </div>
-                    <div className="col-span-2 text-center font-semibold">
-                      {campaign.clicks.toLocaleString()}
-                    </div>
-                    <div className="col-span-2 text-center font-semibold">
-                      {campaign.clicks > 0 ? ((campaign.conversions / campaign.clicks) * 100).toFixed(1) : 0}%
-                    </div>
-                    <div className="col-span-2 text-center space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditCampaign(campaign)}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                  </div>
+                  <CampaignRowView
+                    key={campaign.id}
+                    campaign={campaign}
+                    onClick={() => setSelectedCampaign(campaign)}
+                    onEdit={() => handleEditCampaign(campaign)}
+                    onViewAnalytics={() => {
+                      window.location.href = '/analytics';
+                    }}
+                    baseUrl={campaign.landingPageUrl || landingPageUrl}
+                  />
                 ))}
             </div>
           )}
         </TabsContent>
 
         <TabsContent value="editor">
-          {selectedCampaign ? (
-            <CopyVariationEditor 
-              campaign={selectedCampaign} 
-              onSave={handleUpdateCampaign}
-              onCancel={() => setSelectedCampaign(null)}
-            />
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Select a campaign to edit copy variations</p>
-            </div>
-          )}
+          <CopyVariationEditor 
+            campaign={selectedCampaign} 
+            onSave={handleUpdateCampaign}
+            onCancel={() => setSelectedCampaign(null)}
+          />
         </TabsContent>
 
         <TabsContent value="utm">

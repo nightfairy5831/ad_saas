@@ -17,7 +17,9 @@ import {
   Key, 
   Globe,
   Save,
-  Trash2
+  Trash2,
+  CreditCard,
+  Download
 } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -72,11 +74,12 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="project">Project</TabsTrigger>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="billing">Billing</TabsTrigger>
           <TabsTrigger value="api">API Keys</TabsTrigger>
         </TabsList>
 
@@ -411,6 +414,92 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
 
+        {/* Billing */}
+        <TabsContent value="billing">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  <span>Subscription</span>
+                </CardTitle>
+                <CardDescription>
+                  Manage your subscription and billing information
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-primary">Pro Plan</h3>
+                    <span className="text-2xl font-bold text-primary">$49/mo</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Advanced features, unlimited campaigns, priority support
+                  </p>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" className="flex-1">
+                      Change Plan
+                    </Button>
+                    <Button variant="outline" className="flex-1">
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Next billing date:</span>
+                    <span>March 15, 2024</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Payment method:</span>
+                    <span>•••• 1234</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle>Usage This Month</CardTitle>
+                <CardDescription>
+                  Track your current usage against plan limits
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Campaigns</span>
+                    <span className="text-sm font-medium">12 / Unlimited</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div className="bg-primary h-2 rounded-full" style={{ width: '30%' }}></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">AI Generations</span>
+                    <span className="text-sm font-medium">47 / 500</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div className="bg-primary h-2 rounded-full" style={{ width: '9.4%' }}></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">API Calls</span>
+                    <span className="text-sm font-medium">1,234 / 10,000</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div className="bg-primary h-2 rounded-full" style={{ width: '12.3%' }}></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         {/* API Keys */}
         <TabsContent value="api">

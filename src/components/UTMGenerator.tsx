@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,12 @@ import { Separator } from '@/components/ui/separator';
 import { Copy, Link, QrCode, Share, Code, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export const UTMGenerator = () => {
-  const [baseUrl, setBaseUrl] = useState('https://yoursite.com/landing');
+interface UTMGeneratorProps {
+  landingPageUrl?: string;
+}
+
+export const UTMGenerator = ({ landingPageUrl = 'https://yoursite.com/landing' }: UTMGeneratorProps) => {
+  const [baseUrl, setBaseUrl] = useState(landingPageUrl);
   const [utmSource, setUtmSource] = useState('');
   const [utmMedium, setUtmMedium] = useState('');
   const [utmCampaign, setUtmCampaign] = useState('');
@@ -16,6 +20,10 @@ export const UTMGenerator = () => {
   const [utmContent, setUtmContent] = useState('');
   
   const { toast } = useToast();
+
+  useEffect(() => {
+    setBaseUrl(landingPageUrl);
+  }, [landingPageUrl]);
 
   const generateUrl = () => {
     if (!baseUrl || !utmSource || !utmMedium || !utmCampaign) {

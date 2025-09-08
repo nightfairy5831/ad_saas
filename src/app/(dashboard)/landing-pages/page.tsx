@@ -294,12 +294,11 @@ export default function LandingPages() {
                     ${selectedDevice === 'mobile' ? 'w-64 h-96' : ''}
                   `}
                 >
-                  <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-                    <div className="text-center p-8">
-                      <h3 className="text-lg font-semibold mb-2">Landing Page Preview</h3>
-                      <p className="text-gray-600">Your personalized content will appear here</p>
-                    </div>
-                  </div>
+                  <iframe
+                    src="/demo-funnel.html"
+                    className="w-full h-full border-0"
+                    title="Landing Page Preview"
+                  />
                 </div>
               </div>
             </CardContent>
