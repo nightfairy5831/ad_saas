@@ -33,7 +33,7 @@ interface CampaignCardProps {
 
 export const CampaignCard = ({ campaign, onClick, onEdit, onViewAnalytics, onArchive, onUnarchive, baseUrl = 'https://yourlandingpage.com' }: CampaignCardProps) => {
   const { toast } = useToast();
-  const conversionRate = ((campaign.conversions / campaign.clicks) * 100).toFixed(1);
+  const conversionRate = campaign.clicks > 0 ? ((campaign.conversions / campaign.clicks) * 100).toFixed(1) : '0.0';
   
   // Generate UTM link for this campaign
   const generateUTMLink = () => {

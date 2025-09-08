@@ -19,15 +19,39 @@ import {
   Play,
   Eye
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { VideoTutorial } from '@/components/VideoTutorial';
+
+interface TutorialStep {
+  title: string;
+  description: string;
+  details: string[];
+  code?: string;
+  isVideoTutorial?: boolean;
+}
+
+interface Platform {
+  name: string;
+  icon: any;
+  difficulty: string;
+  time: string;
+  color: string;
+  steps: TutorialStep[];
+}
 
 export default function IntegrationGuide() {
   const [activeTab, setActiveTab] = useState('gohighlevel');
+  const { toast } = useToast();
 
   const embedCode = `<!-- Ad SaaS Landing Page Embed -->
-<script src="${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/widget.js" data-site-id="YOUR_SITE_ID"></script>`;
+<script src="https://your-domain.com/widget.js" data-site-id="YOUR_SITE_ID"></script>`;
 
   const copyCode = () => {
     navigator.clipboard.writeText(embedCode);
+    toast({
+      title: "Copied!",
+      description: "Embed code copied to clipboard",
+    });
   };
 
   const platforms = {
@@ -58,14 +82,17 @@ export default function IntegrationGuide() {
           ]
         },
         {
-          title: "Mark Dynamic Content",
-          description: "Add data attributes to elements that should change",
+          title: "Mark Dynamic Content (Video Tutorial)",
+          description: "Watch this step-by-step video guide to set up dynamic content in GoHighLevel",
           details: [
-            "Select text elements you want to personalize",
-            "Add data-copy-element='headline' to headlines",
-            "Add data-copy-element='cta-button' to buttons",
-            "Add data-copy-element='description' to descriptions"
-          ]
+            "📹 INTERACTIVE VIDEO TUTORIAL: Follow along with the visual guide below",
+            "🎯 Learn exactly where to click in the GoHighLevel interface",
+            "⚙️ See real screenshots of the element settings panels",
+            "📝 Watch how to add data-copy-element attributes step by step",
+            "✅ Get confirmation when you complete each step",
+            "💡 TIP: You can pause, rewind, and replay any section"
+          ],
+          isVideoTutorial: true
         },
         {
           title: "Test Your Integration",
@@ -117,17 +144,34 @@ export default function IntegrationGuide() {
 <button data-copy-element="cta-button">Default Button</button>`
         },
         {
-          title: "Configure Dynamic Elements",
+          title: "Configure Dynamic Elements (Step-by-Step)",
           description: "Make your page content change automatically based on UTM parameters",
           details: [
-            "In ClickFunnels editor, click on your headline text",
-            "In right panel, click 'Settings' then 'Advanced' tab",
-            "Scroll to 'Custom Attributes' section",
-            "Click 'Add Attribute'",
-            "Enter: Attribute='data-copy-element' Value='headline'",
-            "Click 'Save' to apply changes",
-            "Repeat for other elements like buttons and descriptions"
-          ]
+            "🎯 STEP 1: In ClickFunnels editor, click on your headline text",
+            "⚙️ STEP 2: In right panel, click 'Settings' then 'Advanced' tab",
+            "📝 STEP 3: Scroll to 'Custom Attributes' section",
+            "➕ STEP 4: Click 'Add Attribute'",
+            "✏️ STEP 5: Enter: Attribute='data-copy-element' Value='headline'",
+            "✅ STEP 6: Click 'Save' to apply changes",
+            "🔄 STEP 7: Repeat for other elements:",
+            "   • Button text → Value: 'cta-button'",
+            "   • Description → Value: 'description'",
+            "💡 Alternative: Use 'Custom HTML' element for full control"
+          ],
+          code: `<!-- WHAT YOU'RE BUILDING: -->
+<!-- Regular ClickFunnels elements become dynamic -->
+
+<!-- Your headline element gets this attribute: -->
+<h1 data-copy-element="headline">Default Headline</h1>
+
+<!-- Your button gets this attribute: -->
+<button data-copy-element="cta-button">Default Button</button>
+
+<!-- OR use Custom HTML Element: -->
+<div class="my-dynamic-section">
+  <h2 data-copy-element="special-offer">Limited Time Offer!</h2>
+  <button data-copy-element="urgent-cta">Act Now - Save 40%</button>
+</div>`
         },
         {
           title: "Publish and Test",
@@ -177,29 +221,38 @@ export default function IntegrationGuide() {
           ]
         },
         {
-          title: "Setup Dynamic Content",
+          title: "Setup Dynamic Content (Step-by-Step)",
           description: "Add smart content that changes based on where visitors come from",
           details: [
-            "In Leadpages editor, drag an 'HTML' widget to your page",
-            "Double-click the HTML widget to open the code editor",
-            "Replace the placeholder with your dynamic content code",
-            "Add multiple HTML widgets for different sections",
-            "Preview your page to ensure widgets display correctly",
-            "Save your changes before publishing"
+            "🎯 STEP 1: In Leadpages editor, drag an 'HTML' widget to your page",
+            "📝 STEP 2: Double-click the HTML widget to open the code editor",
+            "✏️ STEP 3: Replace the placeholder with your dynamic content code:",
+            "💡 STEP 4: Copy this template and customize the text:",
+            "🔄 STEP 5: Add multiple HTML widgets for different sections",
+            "✅ STEP 6: Preview your page to ensure widgets display correctly",
+            "📱 STEP 7: Test on mobile view as well",
+            "💾 STEP 8: Save your changes before publishing"
           ],
-          code: `<!-- Example Leadpages HTML Widget content -->
+          code: `<!-- PASTE THIS into Leadpages HTML Widget: -->
 <div class="dynamic-content" style="text-align: center; padding: 20px;">
+  <!-- Main Headline -->
   <h1 data-copy-element="headline" style="font-size: 36px; margin-bottom: 15px;">
     Your Default Headline Here
   </h1>
+  
+  <!-- Description -->
   <p data-copy-element="description" style="font-size: 18px; margin-bottom: 20px;">
     Your default description text goes here
   </p>
+  
+  <!-- Call-to-Action Button -->
   <button data-copy-element="cta-button" 
           style="background: #ff6b35; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 18px; cursor: pointer;">
     Your Default CTA Button
   </button>
-</div>`
+</div>
+
+<!-- TIP: Create separate HTML widgets for each dynamic section -->`
         },
         {
           title: "Publish and Validate",
@@ -240,30 +293,41 @@ export default function IntegrationGuide() {
           ]
         },
         {
-          title: "Prepare HTML Elements",
+          title: "Prepare HTML Elements (Step-by-Step)",
           description: "Edit your HTML to make specific text change based on visitor's UTM links",
           details: [
-            "Find your page's main content file (index.html, page.php, etc.)",
-            "Locate the headline text in your HTML code",
-            "Add data-copy-element='headline' inside the opening tag",
-            "Do the same for buttons and descriptions",
-            "Save the file and upload if needed"
+            "🎯 STEP 1: Find your page's main content file (index.html, page.php, etc.)",
+            "🔍 STEP 2: Locate the headline text in your HTML code",
+            "✏️ STEP 3: Add data-copy-element='headline' inside the opening tag:",
+            "   BEFORE: <h1 class='title'>Welcome to Our Site</h1>",
+            "   AFTER:  <h1 class='title' data-copy-element='headline'>Welcome to Our Site</h1>",
+            "🔄 STEP 4: Do the same for buttons and descriptions:",
+            "   • Button: data-copy-element='cta-button'",
+            "   • Description: data-copy-element='description'",
+            "💾 STEP 5: Save the file and upload if needed",
+            "💡 WordPress Tip: Use 'Insert Headers and Footers' plugin for easier editing"
           ],
-          code: `<!-- Complete example for custom sites -->
+          code: `<!-- COMPLETE EXAMPLE: -->
 <!DOCTYPE html>
 <html>
 <head>
   <title>My Landing Page</title>
-  <!-- Your Ad SaaS embed script goes here -->
+  <!-- Your CopyAI embed script goes here -->
 </head>
 <body>
+  <!-- HERO SECTION with dynamic content -->
   <div class="hero">
+    <!-- This headline will change based on UTM parameters -->
     <h1 class="hero-title" data-copy-element="main-headline">
       Default: Transform Your Business Today
     </h1>
+    
+    <!-- This description will also be dynamic -->
     <p class="hero-subtitle" data-copy-element="hero-description">
       Default: Join thousands of satisfied customers
     </p>
+    
+    <!-- This button text changes too -->
     <button class="cta-btn" data-copy-element="primary-cta">
       Default: Get Started Free
     </button>
@@ -404,22 +468,30 @@ export default function IntegrationGuide() {
                       
                       <p className="text-muted-foreground mb-3">{step.description}</p>
                       
-                      <ul className="space-y-2 mb-4">
-                        {step.details.map((detail, detailIndex) => (
-                          <li key={detailIndex} className="flex items-start space-x-2">
-                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-                            <span className="text-sm">{detail}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      {step.code && (
-                        <div className="mt-4">
-                          <h4 className="text-sm font-medium mb-2">Code Example:</h4>
-                          <div className="bg-slate-900 text-green-400 p-3 rounded-lg font-mono text-xs">
-                            <pre className="whitespace-pre-wrap overflow-x-auto">{step.code}</pre>
-                          </div>
+                      {step.isVideoTutorial && activeTab === 'gohighlevel' ? (
+                        <div className="mb-4">
+                          <VideoTutorial />
                         </div>
+                      ) : (
+                        <>
+                          <ul className="space-y-2 mb-4">
+                            {step.details.map((detail, detailIndex) => (
+                              <li key={detailIndex} className="flex items-start space-x-2">
+                                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                                <span className="text-sm">{detail}</span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          {step.code && (
+                            <div className="mt-4">
+                              <h4 className="text-sm font-medium mb-2">Code Example:</h4>
+                              <div className="bg-slate-900 text-green-400 p-3 rounded-lg font-mono text-xs">
+                                <pre className="whitespace-pre-wrap overflow-x-auto">{step.code}</pre>
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   ))}

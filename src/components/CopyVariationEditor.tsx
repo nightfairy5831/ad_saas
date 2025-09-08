@@ -21,11 +21,14 @@ interface Campaign {
   };
   clicks: number;
   conversions: number;
+  archived: boolean;
+  landingPageUrl?: string;
 }
 
 interface CopyVariationEditorProps {
   campaign: Campaign | null;
   onSave: (campaign: Campaign) => void;
+  onCancel?: () => void;
 }
 
 export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorProps) => {
@@ -68,7 +71,7 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
 
   if (!campaign) {
     return (
-      <Card className="shadow-professional-sm">
+      <Card className="shadow-sm">
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center">
             <Eye className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -83,7 +86,7 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
   return (
     <div className="space-y-6">
       {/* Campaign Info */}
-      <Card className="shadow-professional-sm">
+      <Card className="shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -103,7 +106,7 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Editor */}
-        <Card className="shadow-professional-sm">
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -179,7 +182,7 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
         </Card>
 
         {/* Preview */}
-        <Card className="shadow-professional-sm">
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Eye className="w-5 h-5 text-primary" />
