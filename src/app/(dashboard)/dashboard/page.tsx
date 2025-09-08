@@ -9,6 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, BarChart3, Globe, Code, Zap, Grid3X3, List, Eye, EyeOff, Settings, Check, X } from 'lucide-react';
+import { CampaignCreator } from '@/components/CampaignCreator';
+import { CopyVariationEditor } from '@/components/CopyVariationEditor';
+import { UTMGenerator } from '@/components/UTMGenerator';
+import { useToast } from '@/hooks/use-toast';
 
 interface Campaign {
   id: string;
@@ -29,6 +33,7 @@ interface Campaign {
 }
 
 export default function DashboardPage() {
+  const { toast } = useToast();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
@@ -519,17 +524,31 @@ export default function DashboardPage() {
         </TabsContent>
 
         <TabsContent value="editor">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Select a campaign to edit copy variations</p>
-          </div>
+          {selectedCampaign ? (
+            <CopyVariationEditor 
+              campaign={selectedCampaign} 
+              onSave={handleUpdateCampaign}
+              onCancel={() => setSelectedCampaign(null)}
+            />
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Select a campaign to edit copy variations</p>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="utm">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">UTM Generator coming soon</p>
-          </div>
+          <UTMGenerator landingPageUrl={landingPageUrl} />
         </TabsContent>
       </Tabs>
+
+      {/* Campaign Creation Dialog */}
+      {isCreatingCampaign && (
+        <CampaignCreator
+          onSave={handleSaveNewCampaign}
+          onCancel={handleCancelCreateCampaign}
+        />
+      )}
     </div>
   );
 }
