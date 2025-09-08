@@ -1,0 +1,223 @@
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Wand2, Save, Eye, Sparkles } from 'lucide-react';
+
+interface Campaign {
+  id: string;
+  name: string;
+  status: 'active' | 'draft' | 'paused';
+  utmSource: string;
+  utmMedium: string;
+  utmCampaign: string;
+  copyVariations: {
+    headline: string;
+    subheadline: string;
+    cta: string;
+  };
+  clicks: number;
+  conversions: number;
+}
+
+interface CopyVariationEditorProps {
+  campaign: Campaign | null;
+  onSave: (campaign: Campaign) => void;
+}
+
+export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorProps) => {
+  const [headline, setHeadline] = useState('');
+  const [subheadline, setSubheadline] = useState('');
+  const [cta, setCta] = useState('');
+
+  useEffect(() => {
+    if (campaign) {
+      setHeadline(campaign.copyVariations.headline);
+      setSubheadline(campaign.copyVariations.subheadline);
+      setCta(campaign.copyVariations.cta);
+    }
+  }, [campaign]);
+
+  const handleSave = () => {
+    if (campaign) {
+      onSave({
+        ...campaign,
+        copyVariations: {
+          headline,
+          subheadline,
+          cta
+        }
+      });
+    }
+  };
+
+  const generateAISuggestions = () => {
+    // Simulate AI suggestions - in real app this would call an AI API
+    const suggestions = [
+      "Transform Your Marketing ROI in 30 Days",
+      "Double Your Conversion Rates with AI",
+      "Stop Wasting Ad Spend on Generic Landing Pages"
+    ];
+    
+    const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+    setHeadline(randomSuggestion);
+  };
+
+  if (!campaign) {
+    return (
+      <Card className="shadow-professional-sm">
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Eye className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Select a Campaign</h3>
+            <p className="text-muted-foreground">Choose a campaign from the list to edit its copy variations</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Campaign Info */}
+      <Card className="shadow-professional-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-bold text-foreground">
+                Editing: {campaign.name}
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                UTM: {campaign.utmSource} / {campaign.utmMedium} / {campaign.utmCampaign}
+              </CardDescription>
+            </div>
+            <Badge className="bg-primary text-primary-foreground">
+              {campaign.status}
+            </Badge>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Editor */}
+        <Card className="shadow-professional-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <span>Copy Editor</span>
+            </CardTitle>
+            <CardDescription>
+              Customize your landing page copy for this UTM campaign
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-foreground">Headline</label>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={generateAISuggestions}
+                  className="text-xs"
+                >
+                  <Wand2 className="w-3 h-3 mr-1" />
+                  AI Suggest
+                </Button>
+              </div>
+              <Input
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value)}
+                placeholder="Enter your compelling headline..."
+                className="text-lg font-semibold"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Character count: {headline.length}/60
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Subheadline
+              </label>
+              <Textarea
+                value={subheadline}
+                onChange={(e) => setSubheadline(e.target.value)}
+                placeholder="Supporting text that elaborates on your value proposition..."
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Character count: {subheadline.length}/160
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Call to Action
+              </label>
+              <Input
+                value={cta}
+                onChange={(e) => setCta(e.target.value)}
+                placeholder="Get Started Free"
+                className="font-medium"
+              />
+            </div>
+
+            <Separator />
+
+            <Button 
+              onClick={handleSave}
+              className="w-full bg-gradient-success text-success-foreground hover:opacity-90"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Changes
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Preview */}
+        <Card className="shadow-professional-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Eye className="w-5 h-5 text-primary" />
+              <span>Live Preview</span>
+            </CardTitle>
+            <CardDescription>
+              See how your copy will appear on the landing page
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            <div className="bg-gradient-subtle border border-border rounded-lg p-6 space-y-4">
+              <div className="text-center space-y-4">
+                <h1 className="text-2xl lg:text-3xl font-bold text-foreground leading-tight">
+                  {headline || "Your Headline Here"}
+                </h1>
+                
+                <p className="text-lg text-muted-foreground leading-relaxed max-w-md mx-auto">
+                  {subheadline || "Your supporting subheadline will appear here to elaborate on your value proposition."}
+                </p>
+                
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-professional-md"
+                >
+                  {cta || "Call to Action"}
+                </Button>
+              </div>
+              
+              <div className="mt-8 pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground text-center">
+                  Preview for UTM: {campaign.utmSource}/{campaign.utmMedium}/{campaign.utmCampaign}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
