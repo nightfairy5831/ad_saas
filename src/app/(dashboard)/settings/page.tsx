@@ -19,8 +19,10 @@ import {
   Save,
   Trash2,
   CreditCard,
-  Download
+  Loader2
 } from 'lucide-react';
+import Request from '@/lib/request';
+import { toast } from 'react-toastify';
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState({
@@ -39,25 +41,92 @@ export default function SettingsPage() {
 
   const [projectInfo, setProjectInfo] = useState({
     name: 'My Marketing Campaigns',
-    domain: 'https://mylandingpage.com'
+    domain: 'https://mylandingpage.com',
+    siteId: '',
+    createdAt: ''
   });
 
-  // Load saved project information on component mount
+  const [landingPages, setLandingPages] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load saved project information and landing pages on component mount
   useEffect(() => {
-    const savedProjectInfo = localStorage.getItem('projectInfo');
-    if (savedProjectInfo) {
-      try {
-        const parsed = JSON.parse(savedProjectInfo);
-        setProjectInfo(parsed);
-      } catch (error) {
-        console.error('Failed to parse saved project info:', error);
+    const loadData = async () => {
+      // Load project info from localStorage
+      const savedProjectInfo = localStorage.getItem('projectInfo');
+      if (savedProjectInfo) {
+        try {
+          const parsed = JSON.parse(savedProjectInfo);
+          setProjectInfo(parsed);
+        } catch (error) {
+          console.error('Failed to parse saved project info:', error);
+        }
       }
-    }
+
+      // Load landing pages from API
+      try {
+        const data = await Request.Get('/api/landing-pages');
+        setLandingPages(data.landingPages || []);
+      } catch (error) {
+        console.error('Failed to load landing pages:', error);
+      }
+    };
+
+    loadData();
   }, []);
 
-  const handleSaveProject = () => {
-    // In a real app, this would save to backend
-    localStorage.setItem('projectInfo', JSON.stringify(projectInfo));
+  const generateSiteId = () => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    return `proj_${random}_${timestamp}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not set';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const handleSaveProject = async () => {
+    setIsSaving(true);
+    
+    // Generate site ID and created date only if not exists
+    const updatedProjectInfo = { ...projectInfo };
+    
+    if (!updatedProjectInfo.siteId) {
+      updatedProjectInfo.siteId = generateSiteId();
+    }
+    
+    if (!updatedProjectInfo.createdAt) {
+      updatedProjectInfo.createdAt = new Date().toISOString();
+    }
+
+    try {
+      // Save to database via API
+      await Request.Put('/api/user/profile', {
+        projectName: updatedProjectInfo.name,
+        primaryDomain: updatedProjectInfo.domain,
+        siteId: updatedProjectInfo.siteId
+      });
+
+      // Update state to trigger re-render
+      setProjectInfo(updatedProjectInfo);
+
+      // Keep localStorage as backup
+      localStorage.setItem('projectInfo', JSON.stringify(updatedProjectInfo));
+      
+      // Show success toast
+      toast.success('Project details saved successfully!', {theme: 'colored'});
+      
+      console.log('Project saved to database with Site ID:', updatedProjectInfo.siteId);
+    } catch (error) {
+      console.error('Failed to save project info:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -104,17 +173,21 @@ export default function SettingsPage() {
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        navigator.clipboard.writeText('proj_copy_ai_main_2024');
+                        navigator.clipboard.writeText(projectInfo.siteId || 'No Site ID yet');
                       }}
+                      disabled={!projectInfo.siteId}
                     >
                       Copy
                     </Button>
                   </div>
                   <code className="text-lg font-mono bg-muted px-3 py-2 rounded border block">
-                    proj_copy_ai_main_2024
+                    {projectInfo.siteId || 'No Site ID - Save project details first'}
                   </code>
                   <p className="text-sm text-muted-foreground mt-2">
-                    ⚠️ Use this exact ID in your embed code on all landing pages
+                    {projectInfo.siteId ? 
+                      '⚠️ Use this exact ID in your embed code on all landing pages' :
+                      '💡 Set project name and primary domain, then save to generate Site ID'
+                    }
                   </p>
                 </div>
                 
@@ -153,28 +226,56 @@ export default function SettingsPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="project-url">Primary Domain</Label>
-                  <Input
-                    id="project-url"
-                    value={projectInfo.domain}
-                    onChange={(e) => setProjectInfo({...projectInfo, domain: e.target.value})}
-                    placeholder="https://yourdomain.com"
-                  />
+                  <Select 
+                    value={projectInfo.domain} 
+                    onValueChange={(value) => setProjectInfo({...projectInfo, domain: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select primary domain" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {landingPages.length > 0 ? (
+                        landingPages.map((url) => (
+                          <SelectItem key={url} value={url}>
+                            {url}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="https://yourdomain.com">
+                          No landing pages available - Create one first
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Select from your created landing pages
+                  </p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm text-muted-foreground">Created</Label>
-                    <p className="font-medium">Dec 15, 2024</p>
+                    <p className="font-medium">{formatDate(projectInfo.createdAt)}</p>
                   </div>
                   <div>
                     <Label className="text-sm text-muted-foreground">Status</Label>
-                    <Badge variant="default" className="bg-green-600 text-white">Active</Badge>
+                    <Badge variant="default" className="bg-green-600 text-white">
+                      {projectInfo.siteId ? 'Active' : 'Setup Required'}
+                    </Badge>
                   </div>
                 </div>
                 
-                <Button className="w-full" onClick={handleSaveProject}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Project Details
+                <Button 
+                  className="w-full" 
+                  onClick={handleSaveProject}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  {isSaving ? 'Saving...' : 'Save Project Details'}
                 </Button>
               </CardContent>
             </Card>

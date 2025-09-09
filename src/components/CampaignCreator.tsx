@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Plus, X, Save } from 'lucide-react';
+import Request from '@/lib/request';
 
 interface Campaign {
   id: string;
@@ -42,42 +43,29 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
   const [selectedUrl, setSelectedUrl] = useState('');
   const [availableUrls, setAvailableUrls] = useState<string[]>([]);
 
-  // Load available URLs from project settings
+  // Load available URLs from landing pages API
   useEffect(() => {
-    const loadProjectSettings = () => {
-      // Get project settings from localStorage
-      const savedProjectInfo = localStorage.getItem('projectInfo');
-      const savedLandingPageUrl = localStorage.getItem('landingPageUrl');
-      
-      const urls: string[] = [];
-      
-      // Add URL from project settings (primary domain)
-      if (savedProjectInfo) {
-        try {
-          const projectInfo = JSON.parse(savedProjectInfo);
-          if (projectInfo.domain) {
-            urls.push(projectInfo.domain);
-          }
-        } catch (error) {
-          console.error('Failed to parse project info:', error);
+    const loadLandingPages = async () => {
+      try {
+        const data = await Request.Get('/api/landing-pages');
+        const urls = data.landingPages || [];
+        
+        // Add fallback if no landing pages exist
+        if (urls.length === 0) {
+          urls.push('https://yourlandingpage.com');
         }
+        
+        setAvailableUrls(urls);
+        setSelectedUrl(urls[0]); // Select first URL by default
+      } catch (error) {
+        console.error('Failed to load landing pages:', error);
+        // Fallback to default
+        setAvailableUrls(['https://yourlandingpage.com']);
+        setSelectedUrl('https://yourlandingpage.com');
       }
-      
-      // Add URL from dashboard funnel URL setting
-      if (savedLandingPageUrl && !urls.includes(savedLandingPageUrl)) {
-        urls.push(savedLandingPageUrl);
-      }
-      
-      // Default fallback
-      if (urls.length === 0) {
-        urls.push('https://yourlandingpage.com');
-      }
-      
-      setAvailableUrls(urls);
-      setSelectedUrl(urls[0]); // Select first URL by default
     };
 
-    loadProjectSettings();
+    loadLandingPages();
   }, []);
 
   const handleSave = () => {
@@ -179,7 +167,7 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground mt-1">
-              Configure URLs in Settings → Project Information
+              Create landing pages in Landing Pages section
             </p>
           </div>
         </div>

@@ -19,6 +19,7 @@ model User {
   projectName   String? @map("project_name")
   primaryDomain String? @map("primary_domain")
   siteId        String? @unique @map("site_id")
+  landingPages  String[] @map("landing_pages")
   
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -76,9 +77,7 @@ model Event {
   revenue Decimal? @db.Decimal(10, 2)
   isHoldout Boolean @default(false) @map("is_holdout") 
 
-  // Relations
   userId String @map("user_id")
-
   createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -120,8 +119,6 @@ model AiGeneration {
 
   @@map("ai_generations")
 }
-
-
 
 enum CampaignStatus {
   ACTIVE

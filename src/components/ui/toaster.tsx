@@ -1,5 +1,8 @@
+"use client";
+
 import { useToast } from "@/hooks/use-toast";
 import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
+import { CheckCircle, XCircle, AlertCircle, Info } from "lucide-react";
 
 export function Toaster() {
   const { toasts } = useToast();
