@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 
 export default function SignupPage() {
   const [loading, setLoading] = useState(false)
@@ -11,16 +10,17 @@ export default function SignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    company: '',
+    timezone: 'America/New_York',
     password: '',
     confirmPassword: '',
     terms: false
   })
   
   const router = useRouter()
-  const supabase = createClient()
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type, checked } = e.target as HTMLInputElement
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -44,21 +44,32 @@ export default function SignupPage() {
       return
     }
 
-    const { error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           name: formData.name,
-        }
-      }
-    })
+          email: formData.email,
+          company: formData.company,
+          timezone: formData.timezone,
+          password: formData.password
+        })
+      })
 
-    if (error) {
-      setError(error.message)
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error)
+        setLoading(false)
+      } else {
+        setError('Registration successful! Please check your email and click the confirmation link before logging in.')
+        setFormData({ name: '', email: '', company: '', timezone: 'America/New_York', password: '', confirmPassword: '', terms: false })
+        setLoading(false)
+      }
+    } catch (error) {
+      setError('Registration failed. Please try again.')
       setLoading(false)
-    } else {
-      router.push('/dashboard')
     }
   }
 
@@ -120,6 +131,41 @@ export default function SignupPage() {
                 className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="Enter your email"
               />
+            </div>
+            
+            <div>
+              <label htmlFor="company" className="block text-sm font-medium">
+                Company
+              </label>
+              <input
+                id="company"
+                name="company"
+                type="text"
+                autoComplete="organization"
+                value={formData.company}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="Enter your company name (optional)"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="timezone" className="block text-sm font-medium">
+                Timezone
+              </label>
+              <select
+                id="timezone"
+                name="timezone"
+                value={formData.timezone}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="America/New_York">Eastern Time (ET)</option>
+                <option value="America/Chicago">Central Time (CT)</option>
+                <option value="America/Denver">Mountain Time (MT)</option>
+                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                <option value="UTC">UTC</option>
+              </select>
             </div>
             
             <div>

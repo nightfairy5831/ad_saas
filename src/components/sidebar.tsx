@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Request from '@/lib/request'
 
 type NavItem = {
   name: string
@@ -82,21 +83,40 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [userProfile, setUserProfile] = useState<any>(null)
   const supabase = createClient()
 
   useEffect(() => {
     // Get initial user
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
+      if (user) {
+        // Fetch user profile from Prisma
+        fetchUserProfile()
+      }
     })
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        fetchUserProfile()
+      } else {
+        setUserProfile(null)
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  const fetchUserProfile = async () => {
+    try {
+      const data = await Request.Get('/api/user/profile')
+      setUserProfile(data)
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error)
+    }
+  }
 
   return (
     <>
@@ -172,9 +192,9 @@ export default function Sidebar() {
               </div>
               <div className="ml-3 flex-1">
                 <p className="text-sm font-medium">
-                  {user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}
+                  {userProfile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}
                 </p>
-                <p className="text-xs text-muted-foreground">{user?.email || 'No email'}</p>
+                <p className="text-xs text-muted-foreground">{userProfile?.email || user?.email || 'No email'}</p>
               </div>
               <button 
                 onClick={async () => {

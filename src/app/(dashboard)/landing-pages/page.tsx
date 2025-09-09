@@ -1,14 +1,51 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Plus, Globe, Eye, Edit3, Copy, ExternalLink, Monitor, Smartphone, Tablet, Archive, ArchiveRestore, EyeOff } from 'lucide-react';
+import Request from '@/lib/request';
+import { toast } from 'react-toastify';
 
 export default function LandingPages() {
   const [selectedDevice, setSelectedDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [showArchived, setShowArchived] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    url: '',
+    description: ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      await Request.Post('/api/landing-pages', formData);
+      setIsModalOpen(false);
+      setFormData({ name: '', url: '', description: '' });
+      
+      // Show success toast
+      toast.success('Landing page created successfully!', {theme: 'colored'});
+      
+      console.log('Landing page created successfully');
+    } catch (error) {
+      console.error('Failed to create landing page:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const campaigns = [
     {
@@ -84,10 +121,69 @@ export default function LandingPages() {
             {showArchived ? <EyeOff className="w-4 h-4 mr-2" /> : <Archive className="w-4 h-4 mr-2" />}
             {showArchived ? 'Hide Archived' : 'Show Archived'}
           </Button>
-          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90">
-            <Plus className="w-4 h-4 mr-2" />
-            New Landing Page
-          </Button>
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90">
+                <Plus className="w-4 h-4 mr-2" />
+                New Landing Page
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create New Landing Page</DialogTitle>
+                <DialogDescription>
+                  Add a new landing page to your project for UTM-based personalization.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Page Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Homepage, Product Landing"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="url">Page URL</Label>
+                  <Input
+                    id="url"
+                    name="url"
+                    type="url"
+                    value={formData.url}
+                    onChange={handleInputChange}
+                    placeholder="https://yourdomain.com/page"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Input
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Brief description of this page"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? 'Creating...' : 'Create Landing Page'}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
