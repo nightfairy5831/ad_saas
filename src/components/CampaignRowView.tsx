@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BarChart3, Edit3, Copy, ExternalLink, Archive, ArchiveRestore } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'react-toastify';
 
 interface Campaign {
   id: string;
@@ -32,7 +32,6 @@ interface CampaignRowViewProps {
 }
 
 export const CampaignRowView = ({ campaign, onClick, onEdit, onViewAnalytics, onArchive, onUnarchive, baseUrl = 'https://yourlandingpage.com' }: CampaignRowViewProps) => {
-  const { toast } = useToast();
   const conversionRate = ((campaign.conversions / campaign.clicks) * 100).toFixed(1);
   
   // Generate UTM link for this campaign
@@ -61,10 +60,7 @@ export const CampaignRowView = ({ campaign, onClick, onEdit, onViewAnalytics, on
 
   const copyUTMLink = () => {
     navigator.clipboard.writeText(utmLink);
-    toast({
-      title: "UTM Link Copied!",
-      description: "The campaign UTM link has been copied to your clipboard",
-    });
+    toast.success('UTM Link copied to clipboard!', {theme: 'colored'});
   };
 
   return (

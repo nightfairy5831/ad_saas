@@ -19,7 +19,7 @@ import {
   Play,
   Eye
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'react-toastify';
 import { VideoTutorial } from '@/components/VideoTutorial';
 
 interface TutorialStep {
@@ -41,17 +41,13 @@ interface Platform {
 
 export default function IntegrationGuide() {
   const [activeTab, setActiveTab] = useState('gohighlevel');
-  const { toast } = useToast();
 
   const embedCode = `<!-- Ad SaaS Landing Page Embed -->
 <script src="https://your-domain.com/widget.js" data-site-id="YOUR_SITE_ID"></script>`;
 
   const copyCode = () => {
     navigator.clipboard.writeText(embedCode);
-    toast({
-      title: "Copied!",
-      description: "Embed code copied to clipboard",
-    });
+    toast.success('Embed code copied to clipboard!', {theme: 'colored'});
   };
 
   const platforms = {

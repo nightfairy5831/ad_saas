@@ -5,13 +5,13 @@ export async function POST(request: NextRequest) {
   try {
     const { name, email, company, timezone, password } = await request.json()
 
-    // Create user in Supabase Auth with metadata
+    // Create user in Supabase Auth with metadata (always ADMIN role for registration)
     const supabase = await createClient()
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, company, timezone }
+        data: { name, company, timezone, role: 'ADMIN' }
       }
     })
 

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Play, Pause, SkipForward, SkipBack, RotateCcw, CheckCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'react-toastify';
 
 interface TutorialStep {
   id: number;
@@ -67,7 +67,6 @@ export const VideoTutorial = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [hasCompleted, setHasCompleted] = useState(false);
-  const { toast } = useToast();
 
   const currentTutorialStep = tutorialSteps[currentStep];
   const totalSteps = tutorialSteps.length;
@@ -89,10 +88,7 @@ export const VideoTutorial = () => {
             } else {
               setIsPlaying(false);
               setHasCompleted(true);
-              toast({
-                title: "Tutorial Complete! 🎉",
-                description: "You're ready to set up dynamic content in GoHighLevel",
-              });
+              toast.success('Tutorial Complete! 🎉 You\'re ready to set up dynamic content in GoHighLevel', {theme: 'colored'});
               return 100;
             }
           }

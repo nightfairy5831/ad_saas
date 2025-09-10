@@ -14,8 +14,8 @@ const Request = {
   Put: async (url: string, body: any) => {
     return await Axios.put(url, body).then((res) => res.data)
   },
-  Delete: async (url: string) => {
-    return await Axios.delete(url).then((res) => res.data)
+  Delete: async (url: string, body?: any) => {
+    return await Axios.delete(url, { data: body }).then((res) => res.data)
   },
 }
 

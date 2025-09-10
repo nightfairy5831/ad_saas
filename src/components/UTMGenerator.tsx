@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Copy, Link, QrCode, Share, Code, BookOpen } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'react-toastify';
 
 interface UTMGeneratorProps {
   landingPageUrl?: string;
@@ -19,7 +19,6 @@ export const UTMGenerator = ({ landingPageUrl = 'https://yoursite.com/landing' }
   const [utmTerm, setUtmTerm] = useState('');
   const [utmContent, setUtmContent] = useState('');
   
-  const { toast } = useToast();
 
   useEffect(() => {
     setBaseUrl(landingPageUrl);
@@ -45,16 +44,9 @@ export const UTMGenerator = ({ landingPageUrl = 'https://yoursite.com/landing' }
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(generatedUrl);
-      toast({
-        title: "Copied!",
-        description: "UTM link has been copied to clipboard",
-      });
+      toast.success('UTM link copied to clipboard!', {theme: 'colored'});
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to copy to clipboard",
-        variant: "destructive",
-      });
+      toast.error('Failed to copy to clipboard', {theme: 'colored'});
     }
   };
 
