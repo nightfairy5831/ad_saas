@@ -14,7 +14,7 @@ import { CampaignRowView } from '@/components/CampaignRowView';
 import { CampaignCreator } from '@/components/CampaignCreator';
 import { CopyVariationEditor } from '@/components/CopyVariationEditor';
 import { UTMGenerator } from '@/components/UTMGenerator';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'react-toastify';
 
 interface Campaign {
   id: string;
@@ -35,7 +35,6 @@ interface Campaign {
 }
 
 export default function DashboardPage() {
-  const { toast } = useToast();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
@@ -109,8 +108,17 @@ export default function DashboardPage() {
       
       setIsCreatingCampaign(false);
       setSelectedCampaign(savedCampaign);
-    } catch (error) {
+      
+      toast.success('Campaign created successfully!', {theme: 'colored'});
+    } catch (error: any) {
       console.error('Error saving campaign:', error);
+      
+      // Handle duplicate UTM parameters error
+      if (error?.response?.status === 409) {
+        toast.error('A campaign with these UTM parameters already exists. Please use different values.', {theme: 'colored'});
+      } else {
+        toast.error('Failed to create campaign. Please try again.', {theme: 'colored'});
+      }
     }
   };
 

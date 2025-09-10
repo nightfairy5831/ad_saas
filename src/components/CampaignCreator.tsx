@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Plus, X, Save } from 'lucide-react';
+import { Plus, X, Save, Loader2 } from 'lucide-react';
 import Request from '@/lib/request';
 
 interface Campaign {
@@ -42,6 +42,7 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
   const [cta, setCta] = useState('');
   const [selectedUrl, setSelectedUrl] = useState('');
   const [availableUrls, setAvailableUrls] = useState<string[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Load available URLs from landing pages API
   useEffect(() => {
@@ -68,30 +69,36 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
     loadLandingPages();
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !utmSource || !utmMedium || !utmCampaign || !headline || !selectedUrl) {
       return; // Basic validation
     }
 
-    const newCampaign: Campaign = {
-      id: Date.now().toString(), // Simple ID generation
-      name,
-      status,
-      utmSource,
-      utmMedium,
-      utmCampaign,
-      copyVariations: {
-        headline,
-        subheadline,
-        cta: cta || 'Get Started'
-      },
-      clicks: 0,
-      conversions: 0,
-      archived: false,
-      landingPageUrl: selectedUrl
-    };
+    setIsCreating(true);
 
-    onSave(newCampaign);
+    try {
+      const newCampaign: Campaign = {
+        id: Date.now().toString(), // Simple ID generation
+        name,
+        status,
+        utmSource,
+        utmMedium,
+        utmCampaign,
+        copyVariations: {
+          headline,
+          subheadline,
+          cta: cta || 'Get Started'
+        },
+        clicks: 0,
+        conversions: 0,
+        archived: false,
+        landingPageUrl: selectedUrl
+      };
+
+      await onSave(newCampaign);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -293,15 +300,25 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
           <Button 
             onClick={handleSave}
             className="flex-1 bg-gradient-success text-success-foreground hover:opacity-90"
-            disabled={!name || !utmSource || !utmMedium || !utmCampaign || !headline || !selectedUrl}
+            disabled={!name || !utmSource || !utmMedium || !utmCampaign || !headline || !selectedUrl || isCreating}
           >
-            <Save className="w-4 h-4 mr-2" />
-            Create Campaign
+            {isCreating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Create Campaign
+              </>
+            )}
           </Button>
           <Button 
             variant="outline" 
             onClick={onCancel}
             className="flex-1"
+            disabled={isCreating}
           >
             Cancel
           </Button>

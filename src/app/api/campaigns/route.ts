@@ -95,8 +95,17 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json(transformedCampaign)
-    } catch (dbError) {
+    } catch (dbError: any) {
       console.error('Database error:', dbError)
+      
+      // Handle unique constraint violation (P2002 is Prisma's code for unique constraint failure)
+      if (dbError.code === 'P2002' && dbError.meta?.target?.includes('utm_source') && dbError.meta?.target?.includes('utm_medium') && dbError.meta?.target?.includes('utm_campaign')) {
+        return NextResponse.json({ 
+          error: 'A campaign with these UTM parameters already exists. Please use different UTM source, medium, or campaign values.',
+          errorCode: 'DUPLICATE_UTM'
+        }, { status: 409 })
+      }
+      
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
   } catch (error) {
