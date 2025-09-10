@@ -13,7 +13,8 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
-  company   String?
+  company   String?  
+  role      UserRole @default(ADMIN)
   timezone  String   @default("America/New_York")
   
   projectName   String? @map("project_name")
@@ -150,4 +151,9 @@ enum AiGenerationType {
   SUBHEADLINE
   CTA
   OPTIMIZATION
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
 }

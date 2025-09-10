@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
+import Request from '@/lib/request';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,26 +56,11 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Clear localStorage on mount if there's corrupted data (debugging helper)
-  useEffect(() => {
-    // Uncomment this line if you need to clear all campaign data and start fresh
-    // localStorage.removeItem('campaigns');
-  }, []);
 
   const loadCampaigns = async () => {
     try {
-      // Load campaigns from localStorage
-      const savedCampaigns = localStorage.getItem('campaigns');
-      let userCampaigns: Campaign[] = [];
-      
-      if (savedCampaigns) {
-        try {
-          userCampaigns = JSON.parse(savedCampaigns);
-        } catch (error) {
-          console.error('Failed to parse saved campaigns:', error);
-          userCampaigns = [];
-        }
-      }
+      // Load campaigns from API
+      const userCampaigns: Campaign[] = await Request.Get('/api/campaigns');
 
       // Add demo test campaign if not hidden
       const testCampaign: Campaign = {
@@ -111,44 +97,18 @@ export default function DashboardPage() {
 
   const handleSaveNewCampaign = async (newCampaign: Campaign) => {
     try {
-      // Generate unique ID
-      const campaignWithId = {
-        ...newCampaign,
-        id: Date.now().toString(),
-        clicks: 0,
-        conversions: 0,
-        archived: false
-      };
-      
-      // Get existing campaigns from localStorage
-      const savedCampaigns = localStorage.getItem('campaigns');
-      let existingCampaigns: Campaign[] = [];
-      
-      if (savedCampaigns) {
-        try {
-          existingCampaigns = JSON.parse(savedCampaigns);
-        } catch (error) {
-          console.error('Failed to parse existing campaigns:', error);
-          existingCampaigns = [];
-        }
-      }
-      
-      // Add new campaign to the beginning
-      const updatedCampaigns = [campaignWithId, ...existingCampaigns];
-      
-      // Save to localStorage
-      localStorage.setItem('campaigns', JSON.stringify(updatedCampaigns));
-      console.log('Saved campaigns to localStorage:', updatedCampaigns);
+      // Create campaign via API
+      const savedCampaign: Campaign = await Request.Post('/api/campaigns', newCampaign);
 
       // Update state - keep test campaign at the end
       setCampaigns(prev => {
         const withoutTest = prev.filter(c => c.id !== 'test-campaign');
         const testCampaign = prev.find(c => c.id === 'test-campaign');
-        return testCampaign ? [campaignWithId, ...withoutTest, testCampaign] : [campaignWithId, ...withoutTest];
+        return testCampaign ? [savedCampaign, ...withoutTest, testCampaign] : [savedCampaign, ...withoutTest];
       });
       
       setIsCreatingCampaign(false);
-      setSelectedCampaign(campaignWithId);
+      setSelectedCampaign(savedCampaign);
     } catch (error) {
       console.error('Error saving campaign:', error);
     }
@@ -170,33 +130,14 @@ export default function DashboardPage() {
         return;
       }
 
-      // Handle real campaigns (save to localStorage)
-      const savedCampaigns = localStorage.getItem('campaigns');
-      let campaigns: Campaign[] = [];
-      
-      if (savedCampaigns) {
-        try {
-          campaigns = JSON.parse(savedCampaigns);
-        } catch (error) {
-          console.error('Failed to parse saved campaigns:', error);
-          campaigns = [];
-        }
-      }
-      
-      // Update the specific campaign
-      const updatedCampaigns = campaigns.map(c => 
-        c.id === updatedCampaign.id ? updatedCampaign : c
-      );
-      
-      // Save back to localStorage
-      localStorage.setItem('campaigns', JSON.stringify(updatedCampaigns));
-      console.log('Updated campaigns in localStorage:', updatedCampaigns);
+      // Update campaign via API
+      const savedCampaign: Campaign = await Request.Put('/api/campaigns', updatedCampaign);
 
       // Update state
       setCampaigns(prev => prev.map(c => 
-        c.id === updatedCampaign.id ? updatedCampaign : c
+        c.id === savedCampaign.id ? savedCampaign : c
       ));
-      setSelectedCampaign(updatedCampaign);
+      setSelectedCampaign(savedCampaign);
     } catch (error) {
       console.error('Error updating campaign:', error);
     }
@@ -383,116 +324,115 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="editor">Copy Editor</TabsTrigger>
-          <TabsTrigger value="utm">UTM Generator</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="campaigns" className="space-y-6">
-          {/* View Controls */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant={hideTestCampaign ? "outline" : "ghost"}
-                  size="sm"
-                  onClick={() => setHideTestCampaign(!hideTestCampaign)}
-                  className="text-sm"
-                >
-                  {hideTestCampaign ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                  {hideTestCampaign ? 'Show' : 'Hide'} Test Campaign
-                </Button>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid3X3 className="w-4 h-4 mr-2" />
-                Grid
-              </Button>
-              <Button
-                variant={viewMode === 'row' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('row')}
-              >
-                <List className="w-4 h-4 mr-2" />
-                Row
-              </Button>
-            </div>
-          </div>
-
-          {/* Campaigns Display */}
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {campaigns
-                .filter(campaign => !(hideTestCampaign && campaign.id === 'test-campaign'))
-                .map((campaign) => (
-                  <CampaignCard
-                    key={campaign.id}
-                    campaign={campaign}
-                    onClick={() => setSelectedCampaign(campaign)}
-                    onEdit={() => handleEditCampaign(campaign)}
-                    onViewAnalytics={() => {
-                      window.location.href = '/analytics';
-                    }}
-                    baseUrl={campaign.landingPageUrl || landingPageUrl}
-                  />
-                ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {/* Row View Header */}
-              <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-muted-foreground border-b">
-                <div className="col-span-3">Campaign</div>
-                <div className="col-span-3">Copy Preview</div>
-                <div className="col-span-2 text-center">Clicks</div>
-                <div className="col-span-2 text-center">Conv. Rate</div>
-                <div className="col-span-2 text-center">Actions</div>
-              </div>
-              
-              {campaigns
-                .filter(campaign => !(hideTestCampaign && campaign.id === 'test-campaign'))
-                .map((campaign) => (
-                  <CampaignRowView
-                    key={campaign.id}
-                    campaign={campaign}
-                    onClick={() => setSelectedCampaign(campaign)}
-                    onEdit={() => handleEditCampaign(campaign)}
-                    onViewAnalytics={() => {
-                      window.location.href = '/analytics';
-                    }}
-                    baseUrl={campaign.landingPageUrl || landingPageUrl}
-                  />
-                ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="editor">
-          <CopyVariationEditor 
-            campaign={selectedCampaign} 
-            onSave={handleUpdateCampaign}
-            onCancel={() => setSelectedCampaign(null)}
-          />
-        </TabsContent>
-
-        <TabsContent value="utm">
-          <UTMGenerator landingPageUrl={landingPageUrl} />
-        </TabsContent>
-      </Tabs>
-
-      {/* Campaign Creation Dialog */}
-      {isCreatingCampaign && (
+      {isCreatingCampaign ? (
         <CampaignCreator
           onSave={handleSaveNewCampaign}
           onCancel={handleCancelCreateCampaign}
         />
+      ) : (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+            <TabsTrigger value="editor">Copy Editor</TabsTrigger>
+            <TabsTrigger value="utm">UTM Generator</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="campaigns" className="space-y-6">
+            {/* View Controls */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant={hideTestCampaign ? "outline" : "ghost"}
+                    size="sm"
+                    onClick={() => setHideTestCampaign(!hideTestCampaign)}
+                    className="text-sm"
+                  >
+                    {hideTestCampaign ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                    {hideTestCampaign ? 'Show' : 'Hide'} Test Campaign
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                >
+                  <Grid3X3 className="w-4 h-4 mr-2" />
+                  Grid
+                </Button>
+                <Button
+                  variant={viewMode === 'row' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('row')}
+                >
+                  <List className="w-4 h-4 mr-2" />
+                  Row
+                </Button>
+              </div>
+            </div>
+
+            {/* Campaigns Display */}
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {campaigns
+                  .filter(campaign => !(hideTestCampaign && campaign.id === 'test-campaign'))
+                  .map((campaign) => (
+                    <CampaignCard
+                      key={campaign.id}
+                      campaign={campaign}
+                      onClick={() => setSelectedCampaign(campaign)}
+                      onEdit={() => handleEditCampaign(campaign)}
+                      onViewAnalytics={() => {
+                        window.location.href = '/analytics';
+                      }}
+                      baseUrl={campaign.landingPageUrl || landingPageUrl}
+                    />
+                  ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Row View Header */}
+                <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-muted-foreground border-b">
+                  <div className="col-span-3">Campaign</div>
+                  <div className="col-span-3">Copy Preview</div>
+                  <div className="col-span-2 text-center">Clicks</div>
+                  <div className="col-span-2 text-center">Conv. Rate</div>
+                  <div className="col-span-2 text-center">Actions</div>
+                </div>
+                
+                {campaigns
+                  .filter(campaign => !(hideTestCampaign && campaign.id === 'test-campaign'))
+                  .map((campaign) => (
+                    <CampaignRowView
+                      key={campaign.id}
+                      campaign={campaign}
+                      onClick={() => setSelectedCampaign(campaign)}
+                      onEdit={() => handleEditCampaign(campaign)}
+                      onViewAnalytics={() => {
+                        window.location.href = '/analytics';
+                      }}
+                      baseUrl={campaign.landingPageUrl || landingPageUrl}
+                    />
+                  ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="editor">
+            <CopyVariationEditor 
+              campaign={selectedCampaign} 
+              onSave={handleUpdateCampaign}
+              onCancel={() => setSelectedCampaign(null)}
+            />
+          </TabsContent>
+
+          <TabsContent value="utm">
+            <UTMGenerator landingPageUrl={landingPageUrl} />
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
