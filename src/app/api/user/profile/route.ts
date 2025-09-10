@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
           name: true, 
           email: true, 
           company: true, 
-          timezone: true 
+          timezone: true,
+          projectName: true,
+          primaryDomain: true,
+          siteId: true
         }
       })
 
@@ -40,7 +43,10 @@ export async function GET(request: NextRequest) {
             name: true, 
             email: true, 
             company: true, 
-            timezone: true 
+            timezone: true,
+            projectName: true,
+            primaryDomain: true,
+            siteId: true
           }
         })
       }
@@ -54,7 +60,10 @@ export async function GET(request: NextRequest) {
         name: user.user_metadata?.name || null,
         email: user.email,
         company: user.user_metadata?.company || null,
-        timezone: user.user_metadata?.timezone || 'America/New_York'
+        timezone: user.user_metadata?.timezone || 'America/New_York',
+        projectName: null,
+        primaryDomain: null,
+        siteId: null
       })
     }
   } catch (error) {

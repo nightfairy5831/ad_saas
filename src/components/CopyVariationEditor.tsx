@@ -5,7 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Wand2, Save, Eye, Sparkles } from 'lucide-react';
+import { Wand2, Save, Eye, Sparkles, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 interface Campaign {
   id: string;
@@ -27,7 +28,7 @@ interface Campaign {
 
 interface CopyVariationEditorProps {
   campaign: Campaign | null;
-  onSave: (campaign: Campaign) => void;
+  onSave: (campaign: Campaign) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -35,6 +36,7 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
   const [headline, setHeadline] = useState('');
   const [subheadline, setSubheadline] = useState('');
   const [cta, setCta] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (campaign) {
@@ -44,16 +46,24 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
     }
   }, [campaign]);
 
-  const handleSave = () => {
-    if (campaign) {
-      onSave({
-        ...campaign,
-        copyVariations: {
-          headline,
-          subheadline,
-          cta
-        }
-      });
+  const handleSave = async () => {
+    if (campaign && !isSaving) {
+      setIsSaving(true);
+      try {
+        await onSave({
+          ...campaign,
+          copyVariations: {
+            headline,
+            subheadline,
+            cta
+          }
+        });
+        toast.success('Copy variations saved successfully!', { theme: 'colored' });
+      } catch (error) {
+        toast.error('Failed to save changes. Please try again.', { theme: 'colored' });
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -173,10 +183,15 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
 
             <Button 
               onClick={handleSave}
-              className="w-full bg-gradient-success text-success-foreground hover:opacity-90"
+              disabled={isSaving}
+              className="w-full bg-gradient-success text-success-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save className="w-4 h-4 mr-2" />
-              Save Changes
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
           </CardContent>
         </Card>
