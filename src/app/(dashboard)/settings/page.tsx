@@ -48,6 +48,11 @@ export default function SettingsPage() {
 
   const [landingPages, setLandingPages] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [isGeneratingKey, setIsGeneratingKey] = useState(false);
+  const [showNewKeyDialog, setShowNewKeyDialog] = useState(false);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [newKeyType, setNewKeyType] = useState<'production' | 'development'>('production');
 
   // Load saved project information and landing pages on component mount
   useEffect(() => {
@@ -69,6 +74,14 @@ export default function SettingsPage() {
         setLandingPages(data.landingPages || []);
       } catch (error) {
         console.error('Failed to load landing pages:', error);
+      }
+
+      // Load API keys
+      try {
+        const data = await Request.Get('/api/api-keys');
+        setApiKeys(data.apiKeys || []);
+      } catch (error) {
+        console.error('Failed to load API keys:', error);
       }
     };
 
@@ -127,6 +140,61 @@ export default function SettingsPage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleGenerateApiKey = async () => {
+    if (!newKeyName.trim()) {
+      toast.error('Please enter a name for the API key', { theme: 'colored' });
+      return;
+    }
+
+    setIsGeneratingKey(true);
+    try {
+      const response = await Request.Post('/api/api-keys', {
+        name: newKeyName.trim(),
+        type: newKeyType
+      });
+
+      // Check if API key of same type already exists and replace it
+      setApiKeys(prev => {
+        const existingKeyIndex = prev.findIndex(key => key.type === newKeyType);
+        if (existingKeyIndex !== -1) {
+          // Replace existing key of same type
+          const updated = [...prev];
+          updated[existingKeyIndex] = response.apiKey;
+          return updated;
+        } else {
+          // Add new key if no existing key of this type
+          return [...prev, response.apiKey];
+        }
+      });
+      
+      toast.success('API key generated successfully!', { theme: 'colored' });
+      setShowNewKeyDialog(false);
+      setNewKeyName('');
+      setNewKeyType('production');
+    } catch (error) {
+      console.error('Failed to generate API key:', error);
+      toast.error('Failed to generate API key. Please try again.', { theme: 'colored' });
+    } finally {
+      setIsGeneratingKey(false);
+    }
+  };
+
+  const handleDeleteApiKey = async (keyId: string) => {
+    try {
+      await Request.Delete(`/api/api-keys?id=${keyId}`);
+      setApiKeys(prev => prev.filter(key => key.id !== keyId));
+      toast.success('API key deleted successfully!', { theme: 'colored' });
+    } catch (error) {
+      console.error('Failed to delete API key:', error);
+      toast.error('Failed to delete API key. Please try again.', { theme: 'colored' });
+    }
+  };
+
+  const copyApiKey = (key: string) => {
+    navigator.clipboard.writeText(key);
+    toast.success('API key copied to clipboard!', { theme: 'colored' });
   };
 
   return (
@@ -615,49 +683,159 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90">
-                <Key className="w-4 h-4 mr-2" />
-                Generate New API Key
-              </Button>
+              {!showNewKeyDialog ? (
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90"
+                  onClick={() => setShowNewKeyDialog(true)}
+                >
+                  <Key className="w-4 h-4 mr-2" />
+                  Generate New API Key
+                </Button>
+              ) : (
+                <div className="p-4 border border-border rounded-lg space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-semibold">Generate New API Key</h3>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setShowNewKeyDialog(false);
+                        setNewKeyName('');
+                        setNewKeyType('production');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="key-name">API Key Name</Label>
+                      <Input
+                        id="key-name"
+                        value={newKeyName}
+                        onChange={(e) => setNewKeyName(e.target.value)}
+                        placeholder="e.g., Production API Key"
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="key-type">Environment</Label>
+                      <Select value={newKeyType} onValueChange={(value: 'production' | 'development') => setNewKeyType(value)}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="production">Production (sk_live_)</SelectItem>
+                          <SelectItem value="development">Development (sk_test_)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleGenerateApiKey}
+                    disabled={isGeneratingKey}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90 disabled:opacity-50"
+                  >
+                    {isGeneratingKey ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Key className="w-4 h-4 mr-2" />
+                    )}
+                    {isGeneratingKey ? 'Generating...' : 'Generate API Key'}
+                  </Button>
+                </div>
+              )}
               
               <div className="space-y-4">
-                <div className="p-4 border border-border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold">Production API Key</h3>
-                      <p className="text-sm text-muted-foreground">Created on Feb 15, 2024</p>
+                {apiKeys && apiKeys.length > 0 ? (
+                  apiKeys.map((apiKey) => (
+                    <div key={apiKey.id} className="p-4 border border-border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold">{apiKey.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Created on {new Date(apiKey.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteApiKey(apiKey.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="bg-muted p-3 rounded font-mono text-sm flex-1">
+                          {apiKey.key.substring(0, 12)}••••••••••••••••••••{apiKey.key.slice(-4)}
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => copyApiKey(apiKey.key)}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                      <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                        <span>
+                          Last used: {apiKey.lastUsedAt ? 
+                            new Date(apiKey.lastUsedAt).toLocaleDateString() : 
+                            'Never'
+                          }
+                        </span>
+                        <span>{apiKey.requestCount} requests total</span>
+                      </div>
                     </div>
-                    <Button variant="outline" size="sm">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="bg-muted p-3 rounded font-mono text-sm">
-                    sk_live_••••••••••••••••••••••••1234
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                    <span>Last used: 2 hours ago</span>
-                    <span>1,234 requests this month</span>
-                  </div>
-                </div>
-                
-                <div className="p-4 border border-border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold">Development API Key</h3>
-                      <p className="text-sm text-muted-foreground">Created on Jan 10, 2024</p>
+                  ))
+                ) : (
+                  <>
+                    <div className="p-4 border border-border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold">Production API Key</h3>
+                          <p className="text-sm text-muted-foreground">Created on Feb 15, 2024</p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="bg-muted p-3 rounded font-mono text-sm">
+                        sk_live_••••••••••••••••••••••••1234
+                      </div>
+                      <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                        <span>Last used: 2 hours ago</span>
+                        <span>1,234 requests this month</span>
+                      </div>
                     </div>
-                    <Button variant="outline" size="sm">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="bg-muted p-3 rounded font-mono text-sm">
-                    sk_test_••••••••••••••••••••••••5678
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                    <span>Last used: 1 day ago</span>
-                    <span>89 requests this month</span>
-                  </div>
-                </div>
+                    
+                    <div className="p-4 border border-border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold">Development API Key</h3>
+                          <p className="text-sm text-muted-foreground">Created on Jan 10, 2024</p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="bg-muted p-3 rounded font-mono text-sm">
+                        sk_test_••••••••••••••••••••••••5678
+                      </div>
+                      <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                        <span>Last used: 1 day ago</span>
+                        <span>89 requests this month</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

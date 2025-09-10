@@ -21,6 +21,21 @@ export default function LandingPages() {
     description: ''
   });
   const [loading, setLoading] = useState(false);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+
+  // Load campaigns on component mount
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      try {
+        const data = await Request.Get('/api/campaigns');
+        setCampaigns(data);
+      } catch (error) {
+        console.error('Failed to load campaigns:', error);
+      }
+    };
+
+    loadCampaigns();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,42 +61,6 @@ export default function LandingPages() {
       setLoading(false);
     }
   };
-  
-  const campaigns = [
-    {
-      id: '1',
-      name: 'Facebook Lead Gen Campaign',
-      status: 'active',
-      utm_source: 'facebook',
-      utm_medium: 'social',
-      utm_campaign: 'lead-gen-q1',
-      clicks: 1250,
-      conversions: 89,
-      archived: false
-    },
-    {
-      id: '2',
-      name: 'Google Ads Enterprise',
-      status: 'active',
-      utm_source: 'google',
-      utm_medium: 'cpc',
-      utm_campaign: 'enterprise-solution',
-      clicks: 890,
-      conversions: 67,
-      archived: false
-    },
-    {
-      id: '3',
-      name: 'Email Newsletter Campaign',
-      status: 'paused',
-      utm_source: 'email',
-      utm_medium: 'newsletter',
-      utm_campaign: 'monthly-update',
-      clicks: 456,
-      conversions: 34,
-      archived: false
-    }
-  ];
   
   const filteredCampaigns = showArchived 
     ? campaigns.filter(c => c.archived) 
@@ -288,15 +267,15 @@ export default function LandingPages() {
                     <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Source:</p>
-                        <p className="font-medium">{campaign.utm_source}</p>
+                        <p className="font-medium">{campaign.utmSource}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Medium:</p>
-                        <p className="font-medium">{campaign.utm_medium}</p>
+                        <p className="font-medium">{campaign.utmMedium}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Campaign:</p>
-                        <p className="font-medium">{campaign.utm_campaign}</p>
+                        <p className="font-medium">{campaign.utmCampaign}</p>
                       </div>
                     </div>
 

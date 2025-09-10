@@ -34,6 +34,17 @@ interface Campaign {
   landingPageUrl?: string;
 }
 
+interface UserProfile {
+  id: string;
+  name: string | null;
+  email: string;
+  company: string | null;
+  timezone: string;
+  projectName: string | null;
+  primaryDomain: string | null;
+  siteId: string | null;
+}
+
 export default function DashboardPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,16 +55,31 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('campaigns');
   const [landingPageUrl, setLandingPageUrl] = useState('https://yourlandingpage.com');
   const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // Load campaigns - temporarily without auth
+  // Load campaigns and user profile
   useEffect(() => {
     loadCampaigns();
+    loadUserProfile();
     // Load saved landing page URL from localStorage
     const savedUrl = localStorage.getItem('landingPageUrl');
     if (savedUrl) {
       setLandingPageUrl(savedUrl);
     }
-  }, []);
+  }, []); 
+
+  const loadUserProfile = async () => {
+    try {
+      const response = await Request.Get('/api/user/profile');
+      setUserProfile(response);
+      // Update landingPageUrl with primaryDomain if available
+      if (response.primaryDomain) {
+        setLandingPageUrl(response.primaryDomain);
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    }
+  };
 
 
   const loadCampaigns = async () => {
@@ -199,7 +225,7 @@ export default function DashboardPage() {
                       <Input
                         value={landingPageUrl}
                         onChange={(e) => setLandingPageUrl(e.target.value)}
-                        placeholder="https://yourlandingpage.com"
+                        placeholder={userProfile?.primaryDomain || "https://yourlandingpage.com"}
                         className="text-sm font-mono h-8"
                       />
                       <Button size="sm" onClick={handleSaveLandingPageUrl} className="h-8 w-8 p-0">
@@ -212,7 +238,7 @@ export default function DashboardPage() {
                   ) : (
                     <div className="flex items-center space-x-2 mt-1">
                       <code className="text-sm font-mono bg-muted px-2 py-1 rounded block flex-1 truncate">
-                        {landingPageUrl}
+                        {userProfile?.primaryDomain || landingPageUrl}
                       </code>
                       <Button 
                         variant="outline" 
@@ -236,14 +262,16 @@ export default function DashboardPage() {
                 <div>
                   <Label className="text-xs text-muted-foreground">Site ID:</Label>
                   <code className="text-sm font-mono bg-muted px-2 py-1 rounded block">
-                    proj_copy_ai_main_2024
+                    {userProfile?.siteId || 'Not configured'}
                   </code>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    navigator.clipboard.writeText('proj_copy_ai_main_2024');
+                    const siteId = userProfile?.siteId || 'Not configured';
+                    navigator.clipboard.writeText(siteId);
+                    toast.success('Site ID copied to clipboard!', { theme: 'colored' });
                   }}
                 >
                   Copy

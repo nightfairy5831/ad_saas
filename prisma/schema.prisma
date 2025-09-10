@@ -21,6 +21,7 @@ model User {
   primaryDomain String? @map("primary_domain")
   siteId        String? @unique @map("site_id")
   landingPages  String[] @map("landing_pages")
+  apiKeys       Json? @map("api_keys")
   
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
