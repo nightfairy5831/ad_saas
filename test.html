@@ -105,28 +105,36 @@
 
   <div class="test-buttons">
     <h3>Test Content Loading (view_lp event)</h3>
-    <button onclick="loadContent({ utm_campaign: 'summer_sale', utm_source: 'facebook' })">
-      Test Summer Sale Campaign
+
+    <button onclick="loadContent({ 
+        campaign_name: 'Google Ads – Eco Home Essentials Launch Q1', 
+        utm_source: 'google', 
+        utm_medium: 'cpc', 
+        utm_campaign: 'eco_launch_q1' 
+      })">
+      Test Google Ads – Eco Home Essentials Launch Q1
     </button>
 
-    <button onclick="loadContent({ utm_source: 'google', utm_content: 'shoes' })">
-      Test Shoe Buyers Segment
+    <button onclick="loadContent({ 
+        campaign_name: 'Google Search Lead Gen Q1', 
+        utm_source: 'google', 
+        utm_medium: 'cpc', 
+        utm_campaign: 'search-leadgen' 
+      })">
+      Test Google Search Lead Gen Q1
     </button>
 
-    <button onclick="loadContent({ fbclid: '123456789' })">
-      Test Facebook Visitors
-    </button>
-
-    <button onclick="loadContent({ gclid: 'abc123xyz' })">
-      Test Google Ads
-    </button>
-
-    <button onclick="loadContent({ utm_source: 'email', utm_campaign: 'newsletter' })">
-      Test Email Subscribers
+    <button onclick="loadContent({ 
+        campaign_name: 'Facebook Lead Gen Q1', 
+        utm_source: 'facebook', 
+        utm_medium: 'social', 
+        utm_campaign: 'leadgen' 
+      })">
+      Test Facebook Lead Gen Q1
     </button>
   </div>
-
   <h3>Response:</h3>
+
   <pre id="output">Click a button to send request...</pre>
 
   <script>
@@ -136,10 +144,7 @@
       document.getElementById('output').textContent = "Loading content...";
       
       try {
-        // First send view_lp event
-        await sendEvent('view_lp', payload);
-        
-        // Then fetch content
+        // First fetch content
         const res = await fetch("http://localhost:3000/api/v1/content", {
           method: "POST",
           headers: {
@@ -177,6 +182,8 @@
           }
         }
         
+        // Then send view_lp event
+        await sendEvent('view_lp', payload);
       } catch (err) {
         document.getElementById('output').textContent = "Error: " + err.message;
       }
