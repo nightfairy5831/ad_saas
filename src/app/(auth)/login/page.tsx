@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { setCurrentUserId } from '@/lib/user-context'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -30,7 +31,7 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: formData.email,
       password: formData.password,
     })
@@ -39,6 +40,10 @@ export default function LoginPage() {
       setError(error.message)
       setLoading(false)
     } else {
+      // Save user ID to localStorage for API requests
+      if (data.user) {
+        setCurrentUserId(data.user.id)
+      }
       router.push('/dashboard')
     }
   }

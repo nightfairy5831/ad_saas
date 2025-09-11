@@ -107,7 +107,6 @@ export default function DashboardPage() {
       
       // Always put test campaign at the end
       setCampaigns([...userCampaigns, testCampaign]);
-      console.log('Loaded campaigns:', [...userCampaigns, testCampaign]);
     } catch (error) {
       console.error('Error in loadCampaigns:', error);
     } finally {

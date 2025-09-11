@@ -53,25 +53,25 @@ export async function POST(request: NextRequest) {
         }
       }
 
-    if (!variant) {
-      return withCors({ error: 'No content variant found for segment' }, 404)
-    }
-
-    // Prepare response
-    const response = {
-      segment: selectedSegment?.name || 'default',
-      blocks: {
-        headline: variant?.headline || 'Welcome!',
-        sub: variant?.sub || 'Great to see you here',
-        bullets: variant?.bullets || [],
-        cta: variant?.cta || 'Get Started'
+      if (!variant) {
+        return withCors({ error: 'No content variant found for segment' }, 404)
       }
-    }
+      
+      // Prepare response
+      const response = {
+        segment: selectedSegment?.name || 'default',
+        blocks: {
+          headline: variant?.headline || 'Welcome!',
+          sub: variant?.sub || 'Great to see you here',
+          bullets: variant?.bullets || [],
+          cta: variant?.cta || 'Get Started'
+        }
+      }
 
-    // Cache the response
-    await redis.set(cacheKey, response, { ex: CACHE_TTL });
+      // Cache the response
+      await redis.set(cacheKey, response, { ex: CACHE_TTL });
 
-    return withCors(response);
+      return withCors(response);
     } 
   }catch (error) {
     console.error('Error fetching content:', error);

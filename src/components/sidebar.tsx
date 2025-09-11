@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Request from '@/lib/request'
+import { setCurrentUserId } from '@/lib/user-context'
 
 type NavItem = {
   name: string
@@ -91,6 +92,8 @@ export default function Sidebar() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
+        // Save user ID to localStorage
+        setCurrentUserId(user.id)
         // Fetch user profile from Prisma
         fetchUserProfile()
       }
@@ -100,8 +103,12 @@ export default function Sidebar() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) {
+        // Save user ID to localStorage
+        setCurrentUserId(session.user.id)
         fetchUserProfile()
       } else {
+        // Clear user ID from localStorage on logout
+        setCurrentUserId(null)
         setUserProfile(null)
       }
     })
