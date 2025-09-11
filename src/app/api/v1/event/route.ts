@@ -9,16 +9,15 @@ export async function OPTIONS() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { event_type, visitor_id, segment, site_id, utm_source, utm_medium, utm_campaign, utm_content, utm_term, gclid, fbclid, revenue, ...metadata } = body
+    const { event_type, segment, site_id, utm_source, utm_medium, utm_campaign, utm_content, utm_term, gclid, fbclid, revenue, ...metadata } = body
 
-    console.log(`Event received: ${event_type}`, { visitor_id, segment, metadata })
+    console.log(`Event received: ${event_type}`, { segment, metadata })
 
-    // Map event_type to database enum
+    // Map event_type to database enum (only 3 types: view, cta, purchase)
     const eventTypeMap: any = {
       'PAGE_VIEW': 'PAGE_VIEW',
       'CTA_CLICK': 'CTA_CLICK', 
-      'FORM_SUBMIT': 'PURCHASE',
-      'PURCHASE': 'PURCHASE'
+      'PURCHASE_CLICK': 'PURCHASE'
     }
 
     // Save to database (find user by site_id or use default)
@@ -30,7 +29,6 @@ export async function POST(request: NextRequest) {
       await prisma.event.create({
         data: {
           type: eventTypeMap[event_type] || 'PAGE_VIEW',
-          visitorId: visitor_id || 'unknown',
           utmSource: utm_source,
           utmMedium: utm_medium, 
           utmCampaign: utm_campaign,

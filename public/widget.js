@@ -17,7 +17,6 @@
 
     // Global state
     let currentSegment = null;
-    let visitorId = null;
     let siteId = null;
 
     // Utility functions
@@ -31,20 +30,6 @@
         console.error(`[CopyAI Widget] ${message}`, ...args);
     }
 
-    function generateVisitorId() {
-        return 'visitor_' + Math.random().toString(36).substring(2, 18) + Date.now();
-    }
-
-    function getOrCreateVisitorId() {
-        if (!visitorId) {
-            visitorId = sessionStorage.getItem('copyai_visitor_id');
-            if (!visitorId) {
-                visitorId = generateVisitorId();
-                sessionStorage.setItem('copyai_visitor_id', visitorId);
-            }
-        }
-        return visitorId;
-    }
 
     function extractSiteId() {
         const script = document.querySelector('script[data-site-id]');
@@ -83,22 +68,6 @@
         return utmParams;
     }
 
-    // GoHighLevel specific parameter extraction
-    function getGoHighLevelParams() {
-        const params = new URLSearchParams(window.location.search);
-        const ghlParams = {};
-        
-        // Common GHL parameters
-        ['contact_id', 'location_id', 'funnel_id', 'step_id'].forEach(param => {
-            const value = params.get(param);
-            if (value) {
-                ghlParams[param] = value;
-                log(`Found GHL ${param}:`, value);
-            }
-        });
-
-        return ghlParams;
-    }
 
     // API calls with retry logic
     async function callAPI(url, data, retryCount = 0) {
@@ -136,12 +105,9 @@
     // Content fetching
     async function fetchPersonalizedContent() {
         const utmParams = getURLParameters();
-        const ghlParams = getGoHighLevelParams();
         
         const requestData = {
             ...utmParams,
-            ...ghlParams,
-            visitor_id: getOrCreateVisitorId(),
             site_id: siteId,
             url: window.location.href,
             referrer: document.referrer,
@@ -178,15 +144,6 @@
             'data-copy-element="secondary-cta"': blocks.cta
         };
 
-        // Legacy data attributes for GoHighLevel compatibility
-        const legacyMappings = {
-            '[data-hero]': blocks.headline,
-            '[data-sub]': blocks.sub,
-            '[data-subhead]': blocks.sub,
-            '[data-cta]': blocks.cta,
-            '[data-headline]': blocks.headline,
-            '[data-description]': blocks.sub
-        };
 
         // Update using data-copy-element attribute
         Object.entries(elementMappings).forEach(([selector, text]) => {
@@ -202,7 +159,13 @@
             });
         });
 
-        // Update using legacy selectors (for existing implementations)
+        // Update using legacy data attributes (for existing landing pages)
+        const legacyMappings = {
+            '[data-headline]': blocks.headline,
+            '[data-sub]': blocks.sub,
+            '[data-cta]': blocks.cta
+        };
+
         Object.entries(legacyMappings).forEach(([selector, text]) => {
             if (!text) return;
             
@@ -216,9 +179,10 @@
             });
         });
 
+
         // Update bullet points if available
         if (blocks.bullets && Array.isArray(blocks.bullets)) {
-            const bulletElements = document.querySelectorAll('[data-copy-element="bullets"], [data-bullets]');
+            const bulletElements = document.querySelectorAll('[data-copy-element="bullets"]');
             bulletElements.forEach(element => {
                 if (element.tagName === 'UL' || element.tagName === 'OL') {
                     element.innerHTML = blocks.bullets.map(bullet => `<li>${bullet}</li>`).join('');
@@ -250,13 +214,11 @@
     async function trackEvent(eventType, metadata = {}) {
         const eventData = {
             event_type: eventType,
-            visitor_id: getOrCreateVisitorId(),
             segment: currentSegment,
             site_id: siteId,
             url: window.location.href,
             timestamp: new Date().toISOString(),
             ...getURLParameters(),
-            ...getGoHighLevelParams(),
             ...metadata
         };
 
@@ -270,12 +232,21 @@
 
     // Event listeners for interaction tracking
     function setupEventTracking() {
-        // Track page view
         trackEvent('PAGE_VIEW');
 
-        // Track CTA clicks
+        // Track CTA clicks and purchases
         document.addEventListener('click', function(e) {
             const element = e.target;
+            
+            const isPurchase = element.matches('[data-purchase]');
+            if (isPurchase) {
+                const purchaseText = element.textContent?.trim() || 'Purchase Click';
+                trackEvent('PURCHASE_CLICK', { 
+                    purchase_text: purchaseText,
+                    element_selector: element.tagName.toLowerCase() + (element.className ? '.' + element.className.split(' ').join('.') : '')
+                });
+                return;
+            }
             
             // Check if clicked element is a CTA
             const isCTA = element.matches('[data-copy-element*="cta"], [data-cta], .cta-button, button[data-copy-element]');
@@ -288,13 +259,6 @@
             }
         });
 
-        // Track form submissions (for conversion tracking)
-        document.addEventListener('submit', function(e) {
-            trackEvent('FORM_SUBMIT', {
-                form_id: e.target.id || 'unknown',
-                form_action: e.target.action || window.location.href
-            });
-        });
     }
 
     // Main initialization
@@ -303,9 +267,6 @@
         
         // Extract site ID
         extractSiteId();
-
-        // Set up visitor tracking
-        getOrCreateVisitorId();
 
         // Fetch and apply personalized content
         try {
@@ -330,11 +291,9 @@
         // Set global debug object
         window.copyAIDebug = {
             currentSegment,
-            visitorId,
             siteId,
             trackEvent,
             getURLParameters,
-            getGoHighLevelParams,
             log,
             CONFIG
         };

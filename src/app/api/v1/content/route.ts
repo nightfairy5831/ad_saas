@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { redis, CACHE_TTL } from '@/lib/redis'
-import { mockSegments, mockVariants } from '@/lib/mockdata'
 import { handleCorsOptions, withCors } from '@/lib/cors'
 import { prisma } from '@/lib/prisma/db'
 
@@ -52,20 +51,7 @@ export async function POST(request: NextRequest) {
           sub: dbCampaign.subheadline || 'Great to see you here',
           cta: dbCampaign.cta || 'Get Started'
         }
-      } else {
-        // Fallback to mock data
-        selectedSegment = mockSegments.find(segment => {
-          if (utm_campaign && segment.utm_campaign === utm_campaign) return true
-          if (utm_source && segment.utm_source === utm_source) return true
-          if (utm_content && segment.utm_content === utm_content) return true
-          if (gclid && segment.gclid) return true
-          if (fbclid && segment.fbclid) return true
-          return false
-        }) || mockSegments[0]
-
-        variant = mockVariants.find(v => v.segment_name === selectedSegment.name)
       }
-    }
 
     if (!variant) {
       return withCors({ error: 'No content variant found for segment' }, 404)
