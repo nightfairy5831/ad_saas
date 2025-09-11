@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/db'
 import { getUserFromRequest } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 // Generate a secure and unique API key
 async function generateApiKey(prefix: string = 'sk_live_', userId: string): Promise<string> {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
