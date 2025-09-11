@@ -239,10 +239,7 @@ export const UTMGenerator = ({ landingPageUrl = 'https://yoursite.com/landing' }
                 size="sm"
                 onClick={() => {
                   navigator.clipboard.writeText(generateEmbedCode());
-                  toast({
-                    title: "Copied!",
-                    description: "Embed code copied to clipboard",
-                  });
+                  toast("Copied! Embed code copied to clipboard");
                 }}
               >
                 <Copy className="w-4 h-4 mr-2" />
