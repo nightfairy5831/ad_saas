@@ -464,7 +464,7 @@ export default function IntegrationGuide() {
                       
                       <p className="text-muted-foreground mb-3">{step.description}</p>
                       
-                      {step.isVideoTutorial && activeTab === 'gohighlevel' ? (
+                      {'isVideoTutorial' in step && step.isVideoTutorial && activeTab === 'gohighlevel' ? (
                         <div className="mb-4">
                           <VideoTutorial />
                         </div>
