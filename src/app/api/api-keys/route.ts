@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma/db'
+import { getUserFromRequest } from '@/lib/auth'
 
 // Generate a secure and unique API key
 async function generateApiKey(prefix: string = 'sk_live_', userId: string): Promise<string> {
@@ -51,13 +51,10 @@ async function generateApiKey(prefix: string = 'sk_live_', userId: string): Prom
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Get user ID from request
+    const userResult = getUserFromRequest(request)
+    if (userResult instanceof NextResponse) return userResult
+    const user = { id: userResult }
 
     try {
       // Get user's API keys
@@ -79,13 +76,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get authenticated user
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Get user ID from request
+    const userResult = getUserFromRequest(request)
+    if (userResult instanceof NextResponse) return userResult
+    const user = { id: userResult }
 
     const { name, type = 'production' } = await request.json()
 
@@ -147,13 +141,10 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    // Get authenticated user
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Get user ID from request
+    const userResult = getUserFromRequest(request)
+    if (userResult instanceof NextResponse) return userResult
+    const user = { id: userResult }
 
     const { searchParams } = new URL(request.url)
     const keyId = searchParams.get('id')

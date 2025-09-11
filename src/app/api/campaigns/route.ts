@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma/db'
+import { getUserFromRequest } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Get user ID from request
+    const userResult = getUserFromRequest(request)
+    if (userResult instanceof NextResponse) return userResult
+    const user = { id: userResult }
 
     try {
       const campaigns = await prisma.campaign.findMany({
@@ -49,12 +47,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Get user ID from request
+    const userResult = getUserFromRequest(request)
+    if (userResult instanceof NextResponse) return userResult
+    const user = { id: userResult }
 
     const body = await request.json()
     const { name, status, utmSource, utmMedium, utmCampaign, copyVariations, landingPageUrl } = body
@@ -116,12 +112,10 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Get user ID from request
+    const userResult = getUserFromRequest(request)
+    if (userResult instanceof NextResponse) return userResult
+    const user = { id: userResult }
 
     const body = await request.json()
     const { id, name, status, utmSource, utmMedium, utmCampaign, copyVariations, landingPageUrl } = body
@@ -177,12 +171,10 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Get user ID from request
+    const userResult = getUserFromRequest(request)
+    if (userResult instanceof NextResponse) return userResult
+    const user = { id: userResult }
 
     const body = await request.json()
     const { id } = body
