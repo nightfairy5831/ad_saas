@@ -24,7 +24,7 @@ async function generateApiKey(prefix: string = 'sk_live_', userId: string): Prom
       const existingUser = await prisma.user.findFirst({
         where: {
           apiKeys: {
-            path: '$[*].key',
+            path: ['$[*].key'],
             array_contains: apiKey
           }
         }
