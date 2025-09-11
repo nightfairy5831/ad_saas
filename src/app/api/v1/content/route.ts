@@ -69,11 +69,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Cache the response
-    await redis.set(cacheKey, response, { ex: CACHE_TTL })
+    await redis.set(cacheKey, response, { ex: CACHE_TTL });
 
-    return withCors(response)
-  } catch (error) {
-    console.error('Error fetching content:', error)
-    return withCors({ error: 'Internal server error' }, 500)
+    return withCors(response);
+    } 
+  }catch (error) {
+    console.error('Error fetching content:', error);
+    return withCors({ error: 'Internal server error' }, 500);
   }
 }
