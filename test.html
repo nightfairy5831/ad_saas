@@ -9,62 +9,6 @@
       padding: 2rem;
       background: #f8f9fa;
     }
-    .content-area {
-      background: white;
-      border-radius: 8px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .placeholder {
-      padding: 1rem;
-      margin: 0.5rem 0;
-      border: 2px dashed #dee2e6;
-      border-radius: 6px;
-      min-height: 50px;
-    }
-    h1[data-hero] {
-      color: #212529;
-      font-size: 2.5rem;
-      margin: 0.5rem 0;
-    }
-    p[data-sub] {
-      color: #6c757d;
-      font-size: 1.25rem;
-      margin: 0.5rem 0;
-    }
-    .button-group {
-      display: flex;
-      gap: 1rem;
-      margin: 1rem 0;
-    }
-    button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      background: #007bff;
-      color: white;
-      cursor: pointer;
-      font-size: 1rem;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    button[data-cta] {
-      background: #28a745;
-      flex: 1;
-    }
-    button[data-cta]:hover {
-      background: #218838;
-    }
-    button[data-purchase] {
-      background: #ffc107;
-      color: #212529;
-      flex: 1;
-    }
-    button[data-purchase]:hover {
-      background: #e0a800;
-    }
     .test-buttons {
       background: white;
       border-radius: 8px;
@@ -75,148 +19,41 @@
     .test-buttons h3 {
       margin-top: 0;
     }
-    .test-buttons button {
+    .test-buttons a {
       display: block;
+      padding: 10px 20px;
       margin: 0.5rem 0;
-      width: 100%;
-    }
-    pre {
-      background: #222;
-      color: #0f0;
-      padding: 1rem;
       border-radius: 6px;
-      max-height: 300px;
-      overflow: auto;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      text-align: center;
+      font-size: 1rem;
+    }
+    .test-buttons a:hover {
+      background: #0056b3;
     }
   </style>
 </head>
 <body>
-  <h2>Test Content API with Dynamic Content</h2>
+  <h2>Ad Simulation with UTM Parameters</h2>
 
-  <div class="content-area">
-    <h1 data-hero class="placeholder">Hero text will appear here after clicking a test button</h1>
-    <p data-sub class="placeholder">Sub text will appear here after clicking a test button</p>
-    
-    <div class="button-group">
-      <button data-cta onclick="sendEvent('cta_click')">CTA Button Text</button>
-      <button data-purchase onclick="sendEvent('purchase')">Purchase Now</button>
-    </div>
-  </div>
 
   <div class="test-buttons">
     <h3>Test Content Loading (view_lp event)</h3>
-    <button onclick="loadContent({ utm_campaign: 'summer_sale', utm_source: 'facebook' })">
-      Test Summer Sale Campaign
-    </button>
 
-    <button onclick="loadContent({ utm_source: 'google', utm_content: 'shoes' })">
-      Test Shoe Buyers Segment
-    </button>
+    <a href="https://movesmethod.com/test-1755?utm_source=google&utm_medium=cpc&utm_campaign=eco_launch_q1">
+      Test Google Ads – Eco Home Essentials Launch Q1
+    </a>
 
-    <button onclick="loadContent({ fbclid: '123456789' })">
-      Test Facebook Visitors
-    </button>
+    <a href="https://movesmethod.com/test-1755?utm_source=google&utm_medium=cpc&utm_campaign=search-leadgen">
+      Test Google Search Lead Gen Q1
+    </a>
 
-    <button onclick="loadContent({ gclid: 'abc123xyz' })">
-      Test Google Ads
-    </button>
-
-    <button onclick="loadContent({ utm_source: 'email', utm_campaign: 'newsletter' })">
-      Test Email Subscribers
-    </button>
+    <a href="https://movesmethod.com/test-1755?utm_source=facebook&utm_medium=social&utm_campaign=leadgen">
+      Test Facebook Lead Gen Q1
+    </a>
   </div>
 
-  <h3>Response:</h3>
-  <pre id="output">Click a button to send request...</pre>
-
-  <script>
-    let currentSegment = null;
-
-    async function loadContent(payload) {
-      document.getElementById('output').textContent = "Loading content...";
-      
-      try {
-        // First send view_lp event
-        await sendEvent('view_lp', payload);
-        
-        // Then fetch content
-        const res = await fetch("http://localhost:3000/api/v1/content", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-        
-        const data = await res.json();
-        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-        
-        // Store current segment for event tracking
-        currentSegment = data.segment;
-        
-        // Swap content in placeholders
-        if (data.blocks) {
-          // Update hero text
-          const heroElement = document.querySelector('[data-hero]');
-          if (heroElement && data.blocks.headline) {
-            heroElement.textContent = data.blocks.headline;
-            heroElement.classList.remove('placeholder');
-          }
-          
-          // Update sub text
-          const subElement = document.querySelector('[data-sub]');
-          if (subElement && data.blocks.sub) {
-            subElement.textContent = data.blocks.sub;
-            subElement.classList.remove('placeholder');
-          }
-          
-          // Update CTA button text
-          const ctaButton = document.querySelector('[data-cta]');
-          if (ctaButton && data.blocks.cta) {
-            ctaButton.textContent = data.blocks.cta;
-          }
-        }
-        
-      } catch (err) {
-        document.getElementById('output').textContent = "Error: " + err.message;
-      }
-    }
-
-    async function sendEvent(eventType, additionalData = {}) {
-      const eventPayload = {
-        event_type: eventType,
-        segment: currentSegment,
-        timestamp: new Date().toISOString(),
-        ...additionalData
-      };
-      
-      console.log('Sending event:', eventPayload);
-      
-      try {
-        const res = await fetch("http://localhost:3000/api/v1/event", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(eventPayload)
-        });
-        
-        const data = await res.json();
-        
-        // Only update output for CTA and purchase events
-        if (eventType === 'cta_click' || eventType === 'purchase') {
-          document.getElementById('output').textContent = 
-            `Event sent: ${eventType}\n` + JSON.stringify(data, null, 2);
-        }
-        
-        return data;
-      } catch (err) {
-        console.error('Error sending event:', err);
-        if (eventType !== 'view_lp') {
-          document.getElementById('output').textContent = "Event Error: " + err.message;
-        }
-      }
-    }
-  </script>
 </body>
 </html>

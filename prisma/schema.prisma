@@ -66,7 +66,6 @@ model Campaign {
 model Event {
   id        String    @id @default(uuid())
   type      EventType
-  visitorId String    @map("visitor_id")
 
   utmSource   String? @map("utm_source")
   utmMedium   String? @map("utm_medium")
@@ -85,7 +84,6 @@ model Event {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
-  @@index([visitorId])
   @@index([utmSource, utmMedium, utmCampaign])
   @@map("events")
 }

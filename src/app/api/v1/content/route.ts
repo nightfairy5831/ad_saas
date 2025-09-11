@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { redis, CACHE_TTL } from '@/lib/redis'
-import { mockSegments, mockVariants } from '@/lib/mockdata'
 import { handleCorsOptions, withCors } from '@/lib/cors'
+import { prisma } from '@/lib/prisma/db'
 
 export async function OPTIONS() {
   return handleCorsOptions()
@@ -15,35 +15,43 @@ export async function POST(request: NextRequest) {
     // Create cache key from UTM parameters
     const cacheKey = `content:${utm_campaign || ''}:${utm_source || ''}:${utm_content || ''}:${gclid ? 'gclid' : ''}:${fbclid ? 'fbclid' : ''}`
 
-    // Try to get from cache first
+    // Step 1: Try Redis cache first
     const cached = await redis.get(cacheKey)
     if (cached) {
       return withCors(cached)
     }
 
-    // Find matching segment based on UTM parameters
-    const matchedSegment = mockSegments.find(segment => {
-      const campaignMatch = !utm_campaign || segment.utm_campaign === utm_campaign
-      const sourceMatch = !utm_source || segment.utm_source === utm_source
-      const contentMatch = !utm_content || segment.utm_content === utm_content
-      const gclidMatch = !gclid || segment.gclid === true
-      const fbclidMatch = !fbclid || segment.fbclid === true
+    // Step 2: Search Redis for UTM & copy block pairs
+    const redisSearchKey = `utm:${utm_campaign || utm_source || 'default'}`
+    const redisContent = await redis.get(redisSearchKey)
+    
+    let selectedSegment: any, variant: any
 
-      // Check if any parameter matches (OR logic)
-      if (utm_campaign && segment.utm_campaign === utm_campaign) return true
-      if (utm_source && segment.utm_source === utm_source) return true
-      if (utm_content && segment.utm_content === utm_content) return true
-      if (gclid && segment.gclid) return true
-      if (fbclid && segment.fbclid) return true
+    if (redisContent) {
+      // Found in Redis
+      selectedSegment = { name: 'redis_match' }
+      variant = redisContent
+    } else {
+      // Step 3: Database fallback - search campaigns
+      const dbCampaign = await prisma.campaign.findFirst({
+        where: {
+          OR: [
+            { utmCampaign: utm_campaign },
+            { utmSource: utm_source },
+            { utmContent: utm_content }
+          ],
+          status: 'ACTIVE'
+        }
+      })
 
-      return false
-    })
-
-    // Default segment if no match
-    const selectedSegment = matchedSegment || mockSegments[0]
-
-    // Find variant for the segment
-    const variant = mockVariants.find(v => v.segment_name === selectedSegment.name)
+      if (dbCampaign) {
+        selectedSegment = { name: dbCampaign.name || 'db_match' }
+        variant = {
+          headline: dbCampaign.headline || 'Welcome!',
+          sub: dbCampaign.subheadline || 'Great to see you here',
+          cta: dbCampaign.cta || 'Get Started'
+        }
+      }
 
     if (!variant) {
       return withCors({ error: 'No content variant found for segment' }, 404)
@@ -51,12 +59,12 @@ export async function POST(request: NextRequest) {
 
     // Prepare response
     const response = {
-      segment: selectedSegment.name,
+      segment: selectedSegment?.name || 'default',
       blocks: {
-        headline: variant.headline,
-        sub: variant.sub,
-        bullets: variant.bullets || [],
-        cta: variant.cta
+        headline: variant?.headline || 'Welcome!',
+        sub: variant?.sub || 'Great to see you here',
+        bullets: variant?.bullets || [],
+        cta: variant?.cta || 'Get Started'
       }
     }
 
