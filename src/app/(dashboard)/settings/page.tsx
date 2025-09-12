@@ -119,7 +119,7 @@ export default function SettingsPage() {
 
     try {
       // Save to database via API
-      await Request.Put('/api/user/profile', {
+      await Request.Put('/api/user', {
         projectName: updatedProjectInfo.name,
         primaryDomain: updatedProjectInfo.domain,
         siteId: updatedProjectInfo.siteId

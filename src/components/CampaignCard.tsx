@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Edit3, Eye, ExternalLink, Copy, Archive, ArchiveRestore } from 'lucide-react';
+import { BarChart3, Edit3, ExternalLink, Copy, Archive, ArchiveRestore } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 interface Campaign {

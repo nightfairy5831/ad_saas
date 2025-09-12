@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
       variant = parsedContent
     } else {
       // Step 3: Database fallback - search campaigns
+      console.log('Searching for campaign with UTMs:', { utm_campaign, utm_source, utm_content });
+      
       const dbCampaign = await prisma.campaign.findFirst({
         where: {
           OR: [
@@ -44,6 +46,13 @@ export async function POST(request: NextRequest) {
           status: 'ACTIVE'
         }
       })
+      
+      console.log('Found campaign:', dbCampaign ? { 
+        name: dbCampaign.name, 
+        utmCampaign: dbCampaign.utmCampaign, 
+        utmSource: dbCampaign.utmSource,
+        headline: dbCampaign.headline 
+      } : 'No campaign found');
 
       if (dbCampaign) {
         selectedSegment = { name: dbCampaign.name || 'db_match' }

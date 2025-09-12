@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import Request from '@/lib/request';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, BarChart3, Globe, Code, Zap, Grid3X3, List, Eye, EyeOff, Settings, Check, X } from 'lucide-react';
 import { CampaignCard } from '@/components/CampaignCard';
@@ -70,7 +69,7 @@ export default function DashboardPage() {
 
   const loadUserProfile = async () => {
     try {
-      const response = await Request.Get('/api/user/profile');
+      const response = await Request.Get('/api/user');
       setUserProfile(response);
       // Update landingPageUrl with primaryDomain if available
       if (response.primaryDomain) {

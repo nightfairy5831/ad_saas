@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { 
   Sparkles, 
-  Send, 
   Copy, 
   RefreshCw, 
   Wand2, 
