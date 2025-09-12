@@ -10,10 +10,17 @@ export async function OPTIONS() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { utm_campaign, utm_source, utm_content, gclid, fbclid } = body
+    const { utm_campaign, utm_source, utm_medium, gclid, fbclid } = body
 
-    // Create cache key from UTM parameters
-    const cacheKey = `content:${utm_campaign || ''}:${utm_source || ''}:${utm_content || ''}:${gclid ? 'gclid' : ''}:${fbclid ? 'fbclid' : ''}`
+    // Normalize UTM parameters - use space for missing values
+    const normalizedUtmSource = utm_source || ' '
+    const normalizedUtmMedium = utm_medium || ' '
+    const normalizedUtmCampaign = utm_campaign || ' '
+    const normalizedGclid = gclid || ' '
+    const normalizedFbclid = fbclid || ' '
+
+    // Create cache key from all 5 UTM parameters
+    const cacheKey = `content:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}:${normalizedGclid}:${normalizedFbclid}`
 
     // Step 1: Try Redis cache first
     const cached = await redis.get(cacheKey)
@@ -21,8 +28,8 @@ export async function POST(request: NextRequest) {
       return withCors(cached)
     }
 
-    // Step 2: Search Redis for UTM & copy block pairs
-    const redisSearchKey = `utm:${utm_campaign || utm_source || 'default'}`
+    // Step 2: Search Redis for UTM & copy block pairs using all 5 parameters
+    const redisSearchKey = `utm:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}:${normalizedGclid}:${normalizedFbclid}`
     const redisContent = await redis.get(redisSearchKey)
     
     let selectedSegment: any, variant: any
@@ -33,16 +40,14 @@ export async function POST(request: NextRequest) {
       selectedSegment = { name: parsedContent.campaignName || 'redis_match' }
       variant = parsedContent
     } else {
-      // Step 3: Database fallback - search campaigns
-      console.log('Searching for campaign with UTMs:', { utm_campaign, utm_source, utm_content });
+      // Step 3: Database fallback - search campaigns with exact match on all 5 parameters
+      console.log('Searching for campaign with UTMs:', { utm_source, utm_medium, utm_campaign, gclid, fbclid });
       
       const dbCampaign = await prisma.campaign.findFirst({
         where: {
-          OR: [
-            { utmCampaign: utm_campaign },
-            { utmSource: utm_source },
-            { utmContent: utm_content }
-          ],
+          utmSource: normalizedUtmSource,
+          utmMedium: normalizedUtmMedium,
+          utmCampaign: normalizedUtmCampaign,
           status: 'ACTIVE'
         }
       })
@@ -63,7 +68,7 @@ export async function POST(request: NextRequest) {
           cta: dbCampaign.cta || 'Get Started'
         }
 
-        // Populate Redis cache for future requests
+        // Populate Redis cache for future requests using normalized key
         await redis.set(redisSearchKey, JSON.stringify(variant), { ex: CACHE_TTL });
       }
 
