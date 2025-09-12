@@ -118,7 +118,7 @@ export default function Sidebar() {
 
   const fetchUserProfile = async () => {
     try {
-      const data = await Request.Get('/api/user/profile')
+      const data = await Request.Get('/api/user')
       setUserProfile(data)
     } catch (error) {
       console.error('Failed to fetch user profile:', error)

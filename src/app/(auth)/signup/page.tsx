@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Request from '@/lib/request'
 
 export default function SignupPage() {
   const [loading, setLoading] = useState(false)
@@ -45,30 +46,24 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          company: formData.company,
-          timezone: formData.timezone,
-          password: formData.password
-        })
+      await Request.Post('/api/auth', {
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        timezone: formData.timezone,
+        password: formData.password
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error)
-        setLoading(false)
-      } else {
-        setError('Registration successful! Please check your email and click the confirmation link before logging in.')
-        setFormData({ name: '', email: '', company: '', timezone: 'America/New_York', password: '', confirmPassword: '', terms: false })
-        setLoading(false)
-      }
-    } catch (error) {
-      setError('Registration failed. Please try again.')
+      setError('Registration successful! Redirecting to login page...')
+      setFormData({ name: '', email: '', company: '', timezone: 'America/New_York', password: '', confirmPassword: '', terms: false })
+      setLoading(false)
+      
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
+    } catch (error: any) {
+      setError(error?.response?.data?.error || 'Registration failed. Please try again.')
       setLoading(false)
     }
   }
