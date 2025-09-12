@@ -10,8 +10,6 @@
     const CONFIG = {
         apiEndpoint: 'https://ad-saas.onrender.com/api/v1/content',
         eventEndpoint: 'https://ad-saas.onrender.com/api/v1/event',
-        retryAttempts: 3,
-        retryDelay: 1000, // ms
         debug: true
     };
 
@@ -68,8 +66,8 @@
     }
 
 
-    // API calls with retry logic
-    async function callAPI(url, data, retryCount = 0) {
+    // API calls
+    async function callAPI(url, data) {
         try {
             log(`Calling API: ${url}`, data);
             
@@ -90,13 +88,7 @@
             log('API response:', result);
             return result;
         } catch (err) {
-            error(`API call failed (attempt ${retryCount + 1}):`, err);
-            
-            if (retryCount < CONFIG.retryAttempts - 1) {
-                log(`Retrying in ${CONFIG.retryDelay}ms...`);
-                await new Promise(resolve => setTimeout(resolve, CONFIG.retryDelay));
-                return callAPI(url, data, retryCount + 1);
-            }
+            error(`API call failed:`, err);
             throw err;
         }
     }
