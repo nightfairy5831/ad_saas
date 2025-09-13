@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/db'
 import { getUserFromRequest } from '@/lib/auth'
+import { calculateCampaignMetrics } from '@/lib/analytics'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,16 +13,14 @@ export async function GET(request: NextRequest) {
     const user = { id: userResult }
 
     try {
-      const campaigns = await prisma.campaign.findMany({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' }
-      })
+      // Get campaigns with real analytics data
+      const campaignMetrics = await calculateCampaignMetrics(user.id)
 
       // Transform to match frontend interface
-      const transformedCampaigns = campaigns.map(campaign => ({
+      const transformedCampaigns = campaignMetrics.map(campaign => ({
         id: campaign.id,
         name: campaign.name,
-        status: campaign.status.toLowerCase(),
+        status: campaign.status,
         utmSource: campaign.utmSource,
         utmMedium: campaign.utmMedium,
         utmCampaign: campaign.utmCampaign,
@@ -30,8 +29,8 @@ export async function GET(request: NextRequest) {
           subheadline: campaign.subheadline || '',
           cta: campaign.cta || ''
         },
-        clicks: 0, // TODO: Calculate from events
-        conversions: 0, // TODO: Calculate from events
+        clicks: campaign.clicks,
+        conversions: campaign.conversions,
         archived: false,
         landingPageUrl: campaign.landingPageUrl
       }))
