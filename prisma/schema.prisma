@@ -8,114 +8,94 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Users table (matches profile fields from settings UI)
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  company   String?  
-  role      UserRole @default(ADMIN)
-  timezone  String   @default("America/New_York")
-  
-  projectName   String? @map("project_name")
-  primaryDomain String? @map("primary_domain")
-  siteId        String? @unique @map("site_id")
-  landingPages  String[] @map("landing_pages")
-  apiKeys       Json? @map("api_keys")
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  campaigns    Campaign[]
-  events       Event[]
-  billing      Billing?
-  aiGeneration AiGeneration[]
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String?
+  company       String?
+  timezone      String         @default("America/New_York")
+  projectName   String?        @map("project_name")
+  primaryDomain String?        @map("primary_domain")
+  siteId        String?        @unique @map("site_id")
+  landingPages  String[]       @map("landing_pages")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  role          UserRole       @default(ADMIN)
+  apiKeys       Json?          @map("api_keys")
+  aiGeneration  AiGeneration[]
+  billing       Billing?
+  campaigns     Campaign[]
+  events        Event[]
 
   @@map("users")
 }
 
-// Campaigns table (combines UTM + copy variations)
 model Campaign {
-  id     String          @id @default(uuid())
-  name   String
-  status CampaignStatus  @default(DRAFT)
-
-  utmSource   String  @map("utm_source")
-  utmMedium   String  @map("utm_medium")
-  utmCampaign String  @map("utm_campaign")
-  utmTerm     String? @map("utm_term")
-  utmContent  String? @map("utm_content")
-
-  headline    String? 
-  subheadline String?
-  cta         String?
-
-  landingPageUrl  String? @map("landing_page_url")
-  userId          String  @map("user_id")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String         @id @default(uuid())
+  name           String
+  status         CampaignStatus @default(DRAFT)
+  utmSource      String         @map("utm_source")
+  utmMedium      String         @map("utm_medium")
+  utmCampaign    String         @map("utm_campaign")
+  utmTerm        String?        @map("utm_term")
+  utmContent     String?        @map("utm_content")
+  headline       String?
+  subheadline    String?
+  cta            String?
+  landingPageUrl String?        @map("landing_page_url")
+  userId         String         @map("user_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, utmSource, utmMedium, utmCampaign])
   @@map("campaigns")
 }
 
-// Events table (analytics tracking)
 model Event {
-  id        String    @id @default(uuid())
-  type      EventType
-
-  utmSource   String? @map("utm_source")
-  utmMedium   String? @map("utm_medium")
-  utmCampaign String? @map("utm_campaign")
-  utmContent  String? @map("utm_content")
-  utmTerm     String? @map("utm_term")
-  gclid  String? 
-  fbclid String? 
-
-  revenue Decimal? @db.Decimal(10, 2)
-  isHoldout Boolean @default(false) @map("is_holdout") 
-
-  userId String @map("user_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id @default(uuid())
+  type         EventType
+  utmSource    String?   @map("utm_source")
+  utmMedium    String?   @map("utm_medium")
+  utmCampaign  String?   @map("utm_campaign")
+  utmContent   String?   @map("utm_content")
+  utmTerm      String?   @map("utm_term")
+  gclid        String?
+  fbclid       String?
+  revenue      Decimal?  @db.Decimal(10, 2)
+  isHoldout    Boolean   @default(false) @map("is_holdout")
+  userId       String    @map("user_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  campaignName String?   @map("campaign_name")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([campaignName, userId])
   @@index([utmSource, utmMedium, utmCampaign])
   @@map("events")
 }
 
-// Billing table (Stripe integration)
 model Billing {
-  id     String @id @default(uuid())
-  userId String @unique @map("user_id")
-
-  stripeSubscriptionId String? @unique @map("stripe_subscription_id")
-  plan   Plan               @default(TRIAL)
-  status SubscriptionStatus @default(TRIALING)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String             @id @default(uuid())
+  userId               String             @unique @map("user_id")
+  stripeSubscriptionId String?            @unique @map("stripe_subscription_id")
+  plan                 Plan               @default(TRIAL)
+  status               SubscriptionStatus @default(TRIALING)
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("billing")
 }
 
-// AI generations table (track AI copy assistant usage)
 model AiGeneration {
-  id         String           @id @default(uuid())
-  userId     String           @map("user_id")
-  type       AiGenerationType
-  prompt     String
-  generatedContent String     @map("generated_content")
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String           @id @default(uuid())
+  userId           String           @map("user_id")
+  type             AiGenerationType
+  prompt           String
+  generatedContent String           @map("generated_content")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("ai_generations")
 }
