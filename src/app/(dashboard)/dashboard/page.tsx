@@ -190,6 +190,65 @@ export default function DashboardPage() {
     setIsEditingUrl(false);
   };
 
+  const handleArchiveCampaign = async (campaignId: string) => {
+    try {
+      // Handle test campaign (local only)
+      if (campaignId === 'test-campaign') {
+        setCampaigns(prev => prev.map(c => 
+          c.id === campaignId ? { ...c, status: 'active' } : c
+        ));
+        toast.success('Campaign activated successfully!', {theme: 'colored'});
+        return;
+      }
+
+      // Activate campaign via API
+      const campaign = campaigns.find(c => c.id === campaignId);
+      if (campaign) {
+        const updatedCampaign = { ...campaign, status: 'active' };
+        const savedCampaign: Campaign = await Request.Put('/api/campaigns', updatedCampaign);
+        
+        // Update state
+        setCampaigns(prev => prev.map(c => 
+          c.id === savedCampaign.id ? savedCampaign : c
+        ));
+        
+        toast.success('Campaign activated successfully!', {theme: 'colored'});
+      }
+    } catch (error) {
+      console.error('Error activating campaign:', error);
+      toast.error('Failed to activate campaign. Please try again.', {theme: 'colored'});
+    }
+  };
+
+  const handleUnarchiveCampaign = async (campaignId: string) => {
+    try {
+      // Handle test campaign (local only)
+      if (campaignId === 'test-campaign') {
+        setCampaigns(prev => prev.map(c => 
+          c.id === campaignId ? { ...c, archived: false } : c
+        ));
+        return;
+      }
+
+      // Unarchive campaign via API
+      const campaign = campaigns.find(c => c.id === campaignId);
+      if (campaign) {
+        const updatedCampaign = { ...campaign, archived: false };
+        const savedCampaign: Campaign = await Request.Put('/api/campaigns', updatedCampaign);
+        
+        // Update state
+        setCampaigns(prev => prev.map(c => 
+          c.id === savedCampaign.id ? savedCampaign : c
+        ));
+        
+        toast.success('Campaign restored successfully!', {theme: 'colored'});
+      }
+    } catch (error) {
+      console.error('Error restoring campaign:', error);
+      toast.error('Failed to restore campaign. Please try again.', {theme: 'colored'});
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-dashboard-bg flex items-center justify-center">
@@ -422,6 +481,8 @@ export default function DashboardPage() {
                       onViewAnalytics={() => {
                         window.location.href = '/analytics';
                       }}
+                      onArchive={() => handleArchiveCampaign(campaign.id)}
+                      onUnarchive={() => handleUnarchiveCampaign(campaign.id)}
                       baseUrl={campaign.landingPageUrl || landingPageUrl}
                     />
                   ))}
@@ -448,6 +509,8 @@ export default function DashboardPage() {
                       onViewAnalytics={() => {
                         window.location.href = '/analytics';
                       }}
+                      onArchive={() => handleArchiveCampaign(campaign.id)}
+                      onUnarchive={() => handleUnarchiveCampaign(campaign.id)}
                       baseUrl={campaign.landingPageUrl || landingPageUrl}
                     />
                   ))}

@@ -8,8 +8,8 @@
     
     // Configuration
     const CONFIG = {
-        apiEndpoint: 'https://ad-saas.onrender.com/api/v1/content',
-        eventEndpoint: 'https://ad-saas.onrender.com/api/v1/event',
+        apiEndpoint: 'https://ad-funnel-brown.vercel.app/api/v1/content',
+        eventEndpoint: 'https://ad-funnel-brown.vercel.app/api/v1/event',
         debug: true
     };
 
