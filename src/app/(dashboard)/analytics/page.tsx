@@ -7,8 +7,20 @@ import { BarChart3, TrendingUp, Users, MousePointerClick, Eye, Zap } from 'lucid
 import { useEffect, useState } from 'react';
 import Request from '@/lib/request';
 
+interface CampaignMetric {
+  name: string;
+  source: string;
+  clicks: number;
+  conversions: number;
+  conversionRate: number;
+  revenue: number;
+  headline?: string;
+  subheadline?: string;
+  cta?: string;
+}
+
 const Analytics = () => {
-  const [campaignMetrics, setCampaignMetrics] = useState([]);
+  const [campaignMetrics, setCampaignMetrics] = useState<CampaignMetric[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
