@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
       await prisma.event.create({
         data: {
           type: eventTypeMap[event_type] || 'PAGE_VIEW',
+          campaignName: segment,
           utmSource: utm_source,
           utmMedium: utm_medium,
           utmCampaign: utm_campaign,
