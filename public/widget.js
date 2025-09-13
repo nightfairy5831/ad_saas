@@ -16,6 +16,7 @@
     // Global state
     let currentSegment = null;
     let siteId = null;
+    let isHoldout = Math.random() < 0.05; // 5% holdout
 
     // Utility functions
     function log(message, ...args) {
@@ -95,8 +96,13 @@
 
     // Content fetching
     async function fetchPersonalizedContent() {
+        if (isHoldout) {
+            log('User is in holdout group, skipping personalization');
+            return null;
+        }
+
         const utmParams = getURLParameters();
-        
+
         const requestData = {
             ...utmParams,
             site_id: siteId,
@@ -176,20 +182,20 @@
     }
 
     // Event tracking
-    async function trackEvent(eventType, metadata = {}) {
+    async function trackEvent(eventType) {
         const eventData = {
             event_type: eventType,
             segment: currentSegment,
             site_id: siteId,
             url: window.location.href,
             timestamp: new Date().toISOString(),
-            ...getURLParameters(),
-            ...metadata
+            is_holdout: isHoldout,
+            ...getURLParameters()
         };
 
         try {
             await callAPI(CONFIG.eventEndpoint, eventData);
-            log('Event tracked:', eventType, metadata);
+            log('Event tracked:', eventType);
         } catch (err) {
             error('Failed to track event:', eventType, err);
         }
@@ -205,22 +211,14 @@
             
             const isPurchase = element.matches('[data-purchase]');
             if (isPurchase) {
-                const purchaseText = element.textContent?.trim() || 'Purchase Click';
-                trackEvent('PURCHASE_CLICK', { 
-                    purchase_text: purchaseText,
-                    element_selector: element.tagName.toLowerCase() + (element.className ? '.' + element.className.split(' ').join('.') : '')
-                });
+                trackEvent('PURCHASE_CLICK');
                 return;
             }
-            
+
             // Check if clicked element is a CTA
             const isCTA = element.matches('[data-copy-element*="cta"], [data-cta], .cta-button, button[data-copy-element]');
             if (isCTA) {
-                const ctaText = element.textContent?.trim() || 'CTA Click';
-                trackEvent('CTA_CLICK', { 
-                    cta_text: ctaText,
-                    element_selector: element.tagName.toLowerCase() + (element.className ? '.' + element.className.split(' ').join('.') : '')
-                });
+                trackEvent('CTA_CLICK');
             }
         });
 
