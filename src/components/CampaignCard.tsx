@@ -39,8 +39,7 @@ export const CampaignCard = ({ campaign, onClick, onEdit, onViewAnalytics, onArc
     const params = new URLSearchParams({
       utm_source: campaign.utmSource,
       utm_medium: campaign.utmMedium,
-      utm_campaign: campaign.utmCampaign,
-      utm_content: 'campaign_' + campaign.id
+      utm_campaign: campaign.utmCampaign
     });
     return `${baseUrl}?${params.toString()}`;
   };
