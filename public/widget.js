@@ -131,51 +131,45 @@
         let elementsUpdated = 0;
         const { blocks } = content;
 
-        // Update elements by data attributes
-        const elementMappings = {
-            'data-copy-element="headline"': blocks.headline,
-            'data-copy-element="description"': blocks.sub,
-            'data-copy-element="subheadline"': blocks.sub,
-            'data-copy-element="cta-button"': blocks.cta,
-            'data-copy-element="cta"': blocks.cta,
-            'data-copy-element="secondary-cta"': blocks.cta
+        // Helper function to find the text content element within a parent
+        function findTextElement(parentElement, elementType) {
+            let textElement = null;
+
+            if (elementType === 'headline') {
+                textElement = parentElement.querySelector('h1, h2, h3, h4, h5, h6');
+            } else if (elementType === 'subheadline') {
+                textElement = parentElement.querySelector('h2, h3, h4, p, span');
+            } else if (elementType === 'button') {
+                textElement = parentElement.querySelector('.main-heading-button, .button-text, span, div:not(.button-icon-start):not(.button-icon-end)');
+                if (!textElement) textElement = parentElement;
+            }
+
+            return textElement || parentElement;
+        }
+
+        // Update elements using CSS classes
+        const cssMappings = {
+            '.custome-headline': { text: blocks.headline, type: 'headline' },
+            '.custome-subheadline': { text: blocks.sub, type: 'subheadline' },
+            '.custome-ctaButton': { text: blocks.cta, type: 'button' },
+            '.custom-purchaseButton': { text: blocks.cta, type: 'button' }
         };
 
+        Object.entries(cssMappings).forEach(([selector, config]) => {
+            if (!config.text) return;
 
-        // Update using data-copy-element attribute
-        Object.entries(elementMappings).forEach(([selector, text]) => {
-            if (!text) return;
-            
-            const elements = document.querySelectorAll(`[${selector}]`);
-            elements.forEach(element => {
-                const oldText = element.textContent || element.innerHTML;
-                element.textContent = text;
-                element.classList.add('copyai-updated');
-                elementsUpdated++;
-                log(`Updated element: ${selector}`, `"${oldText}" → "${text}"`);
-            });
-        });
-
-        // Update using legacy data attributes (for existing landing pages)
-        const legacyMappings = {
-            '[data-headline]': blocks.headline,
-            '[data-sub]': blocks.sub,
-            '[data-cta]': blocks.cta
-        };
-
-        Object.entries(legacyMappings).forEach(([selector, text]) => {
-            if (!text) return;
-            
             const elements = document.querySelectorAll(selector);
-            elements.forEach(element => {
-                const oldText = element.textContent || element.innerHTML;
-                element.textContent = text;
-                element.classList.add('copyai-updated');
-                elementsUpdated++;
-                log(`Updated legacy element: ${selector}`, `"${oldText}" → "${text}"`);
+            elements.forEach(parentElement => {
+                const textElement = findTextElement(parentElement, config.type);
+                if (textElement) {
+                    const oldText = textElement.textContent || textElement.innerHTML;
+                    textElement.textContent = config.text;
+                    parentElement.classList.add('copyai-updated');
+                    elementsUpdated++;
+                    log(`Updated element: ${selector}`, `"${oldText}" → "${config.text}"`);
+                }
             });
         });
-
 
         log(`Total elements updated: ${elementsUpdated}`);
         return elementsUpdated;
@@ -207,18 +201,26 @@
 
         // Track CTA clicks and purchases
         document.addEventListener('click', function(e) {
-            const element = e.target;
-            
-            const isPurchase = element.matches('[data-purchase]');
-            if (isPurchase) {
-                trackEvent('PURCHASE_CLICK');
-                return;
-            }
+            let element = e.target;
 
-            // Check if clicked element is a CTA
-            const isCTA = element.matches('[data-copy-element*="cta"], [data-cta], .cta-button, button[data-copy-element]');
-            if (isCTA) {
-                trackEvent('CTA_CLICK');
+            let currentElement = element;
+            let maxDepth = 5; // Prevent infinite loops
+            let depth = 0;
+
+            while (currentElement && depth < maxDepth) {
+                if (currentElement.matches && currentElement.matches('.custom-purchaseButton')) {
+                    trackEvent('PURCHASE_CLICK');
+                    return;
+                }
+
+                // Check for CTA button
+                if (currentElement.matches && currentElement.matches('.custome-ctaButton')) {
+                    trackEvent('CTA_CLICK');
+                    return;
+                }
+
+                currentElement = currentElement.parentElement;
+                depth++;
             }
         });
 
@@ -227,11 +229,8 @@
     // Main initialization
     async function initialize() {
         log('Initializing CopyAI Widget...');
-        
-        // Extract site ID
         extractSiteId();
 
-        // Fetch and apply personalized content
         try {
             const content = await fetchPersonalizedContent();
             if (content) {
@@ -239,7 +238,7 @@
                 if (updated > 0) {
                     log(`Successfully personalized ${updated} elements for segment: ${currentSegment}`);
                 } else {
-                    log('No elements found to personalize. Make sure your HTML has data-copy-element attributes.');
+                    log('No elements found to personalize. Make sure your HTML has CSS classes: custome-headline, custome-subheadline, custome-ctaButton, custom-purchaseButton');
                 }
             } else {
                 log('No personalized content received, keeping default content');
@@ -248,13 +247,10 @@
             error('Initialization failed:', err);
         }
 
-        // Set up event tracking
         setupEventTracking();
-
         log('Widget initialized successfully');
     }
 
-    // Auto-initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initialize);
     } else {

@@ -46,6 +46,7 @@ interface UserProfile {
 
 export default function DashboardPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [analytics, setAnalytics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
@@ -56,9 +57,10 @@ export default function DashboardPage() {
   const [isEditingUrl, setIsEditingUrl] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // Load campaigns and user profile
+  // Load campaigns, analytics and user profile
   useEffect(() => {
     loadCampaigns();
+    loadAnalytics();
     loadUserProfile();
     // Load saved landing page URL from localStorage
     const savedUrl = localStorage.getItem('landingPageUrl');
@@ -80,32 +82,43 @@ export default function DashboardPage() {
     }
   };
 
+  const loadAnalytics = async () => {
+    try {
+      const response = await Request.Get('/api/analytics');
+      setAnalytics(response.campaignMetrics || []);
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    }
+  };
+
 
   const loadCampaigns = async () => {
     try {
       // Load campaigns from API
       const userCampaigns: Campaign[] = await Request.Get('/api/campaigns');
 
-      // Add demo test campaign if not hidden
-      const testCampaign: Campaign = {
-        id: 'test-campaign',
-        name: 'Test Campaign',
-        status: 'active',
-        utmSource: 'demo',
-        utmMedium: 'test',
-        utmCampaign: 'example',
-        copyVariations: {
-          headline: 'This is a test campaign',
-          subheadline: 'You can hide this demo campaign using the toggle above',
-          cta: 'Try Demo'
-        },
-        clicks: 125,
-        conversions: 12,
-        archived: false
-      };
-      
-      // Always put test campaign at the end
-      setCampaigns([...userCampaigns, testCampaign]);
+      // Only show test campaign if there are no real campaigns
+      if (userCampaigns.length === 0) {
+        const testCampaign: Campaign = {
+          id: 'test-campaign',
+          name: 'Test Campaign',
+          status: 'active',
+          utmSource: 'demo',
+          utmMedium: 'test',
+          utmCampaign: 'example',
+          copyVariations: {
+            headline: 'This is a test campaign',
+            subheadline: 'You can hide this demo campaign using the toggle above',
+            cta: 'Try Demo'
+          },
+          clicks: 125,
+          conversions: 12,
+          archived: false
+        };
+        setCampaigns([testCampaign]);
+      } else {
+        setCampaigns(userCampaigns);
+      }
     } catch (error) {
       console.error('Error in loadCampaigns:', error);
     } finally {
@@ -123,11 +136,10 @@ export default function DashboardPage() {
       // Create campaign via API
       const savedCampaign: Campaign = await Request.Post('/api/campaigns', newCampaign);
 
-      // Update state - keep test campaign at the end
+      // Update state - remove test campaign when real campaigns exist
       setCampaigns(prev => {
         const withoutTest = prev.filter(c => c.id !== 'test-campaign');
-        const testCampaign = prev.find(c => c.id === 'test-campaign');
-        return testCampaign ? [savedCampaign, ...withoutTest, testCampaign] : [savedCampaign, ...withoutTest];
+        return [savedCampaign, ...withoutTest];
       });
       
       setIsCreatingCampaign(false);
@@ -359,7 +371,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{campaigns.length}</div>
             <p className="text-xs text-muted-foreground">
-              +2 from last month
+              Active campaigns
             </p>
           </CardContent>
         </Card>
@@ -373,10 +385,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {campaigns.reduce((sum, c) => sum + c.clicks, 0).toLocaleString()}
+              {analytics.reduce((sum, c) => sum + c.clicks, 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              +12% from last week
+              Across all campaigns
             </p>
           </CardContent>
         </Card>
@@ -390,10 +402,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {campaigns.reduce((sum, c) => sum + c.conversions, 0)}
+              {analytics.reduce((sum, c) => sum + c.conversions, 0)}
             </div>
             <p className="text-xs text-green-600">
-              +8.3% conversion rate
+              {analytics.length > 0 ? ((analytics.reduce((sum, c) => sum + c.conversions, 0) / analytics.reduce((sum, c) => sum + c.clicks, 0) * 100) || 0).toFixed(1) : 0}% conversion rate
             </p>
           </CardContent>
         </Card>
