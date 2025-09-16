@@ -231,8 +231,6 @@
         log('Initializing CopyAI Widget...');
         extractSiteId();
 
-        // Hide page content and show spinner
-        document.body.style.visibility = 'hidden';
         const spinnerEl = document.createElement('div');
         spinnerEl.id = 'copyai-spinner';
         spinnerEl.innerHTML = '<div style="border:4px solid #f3f3f3;border-top:4px solid #3498db;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:auto;"></div>';
@@ -256,10 +254,11 @@
             error('Initialization failed:', err);
         }
 
-        // Show page content and hide spinner
-        document.body.style.visibility = 'visible';
         const spinner = document.getElementById('copyai-spinner');
         if (spinner) spinner.remove();
+
+        const previewContainer = document.getElementById('preview-container');
+        if (previewContainer) previewContainer.style.display = 'block';
 
         setupEventTracking();
         log('Widget initialized successfully');
