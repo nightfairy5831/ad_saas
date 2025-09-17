@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/db'
 import { getUserFromRequest } from '@/lib/auth'
 import { calculateCampaignMetrics } from '@/lib/analytics'
+import { redis, CACHE_TTL } from '@/lib/redis'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,7 +55,12 @@ export async function POST(request: NextRequest) {
     const user = { id: userResult }
 
     const body = await request.json()
-    const { name, status, utmSource, utmMedium, utmCampaign, copyVariations, landingPageUrl } = body
+    const { name, status, utmSource, utmMedium, utmCampaign, copyVariations, landingPageUrl, siteId } = body
+
+    // Validate siteId is provided
+    if (!siteId) {
+      return NextResponse.json({ error: 'Site ID is required' }, { status: 400 })
+    }
 
     try {
       const campaign = await prisma.campaign.create({
@@ -71,6 +77,27 @@ export async function POST(request: NextRequest) {
           userId: user.id
         }
       })
+
+      // Save formatted content data to Redis
+      const normalizedUtmSource = utmSource || ' '
+      const normalizedUtmMedium = utmMedium || ' '
+      const normalizedUtmCampaign = utmCampaign || ' '
+      const normalizedGclid = ' '
+      const normalizedFbclid = ' '
+
+      const contentKey = `content:${siteId}:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}:${normalizedGclid}:${normalizedFbclid}`
+
+      const contentData = {
+        segment: campaign.name,
+        blocks: {
+          headline: campaign.headline || 'Welcome!',
+          sub: campaign.subheadline || 'Great to see you here',
+          bullets: [],
+          cta: campaign.cta || 'Get Started'
+        }
+      }
+
+      await redis.set(contentKey, contentData, { ex: CACHE_TTL })
 
       // Transform to match frontend interface
       const transformedCampaign = {
@@ -119,13 +146,13 @@ export async function PUT(request: NextRequest) {
     const user = { id: userResult }
 
     const body = await request.json()
-    const { id, name, status, utmSource, utmMedium, utmCampaign, copyVariations, landingPageUrl } = body
+    const { id, name, status, utmSource, utmMedium, utmCampaign, copyVariations, landingPageUrl, siteId } = body
 
     try {
       const campaign = await prisma.campaign.update({
-        where: { 
+        where: {
           id,
-          userId: user.id 
+          userId: user.id
         },
         data: {
           name,
@@ -139,6 +166,29 @@ export async function PUT(request: NextRequest) {
           landingPageUrl
         }
       })
+
+      // Update Redis cache if siteId provided
+      if (siteId) {
+        const normalizedUtmSource = utmSource || ' '
+        const normalizedUtmMedium = utmMedium || ' '
+        const normalizedUtmCampaign = utmCampaign || ' '
+        const normalizedGclid = ' '
+        const normalizedFbclid = ' '
+
+        const contentKey = `content:${siteId}:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}:${normalizedGclid}:${normalizedFbclid}`
+
+        const contentData = {
+          segment: campaign.name,
+          blocks: {
+            headline: campaign.headline || 'Welcome!',
+            sub: campaign.subheadline || 'Great to see you here',
+            bullets: [],
+            cta: campaign.cta || 'Get Started'
+          }
+        }
+
+        await redis.set(contentKey, contentData, { ex: CACHE_TTL })
+      }
 
       // Transform to match frontend interface
       const transformedCampaign = {
