@@ -127,28 +127,35 @@ export default function DashboardPage() {
   };
 
   const handleCreateCampaign = () => {
+    // Check if user has siteId before opening campaign creator
+    if (!userProfile?.siteId) {
+      toast.error('Please set up your Site ID in Settings first before creating campaigns.', {theme: 'colored'});
+      return;
+    }
+
     setIsCreatingCampaign(true);
     setSelectedCampaign(null);
   };
 
   const handleSaveNewCampaign = async (newCampaign: Campaign) => {
     try {
-      // Create campaign via API
-      const savedCampaign: Campaign = await Request.Post('/api/campaigns', newCampaign);
+      // Create campaign via API with siteId
+      const campaignData = { ...newCampaign, siteId: userProfile?.siteId };
+      const savedCampaign: Campaign = await Request.Post('/api/campaigns', campaignData);
 
       // Update state - remove test campaign when real campaigns exist
       setCampaigns(prev => {
         const withoutTest = prev.filter(c => c.id !== 'test-campaign');
         return [savedCampaign, ...withoutTest];
       });
-      
+
       setIsCreatingCampaign(false);
       setSelectedCampaign(savedCampaign);
-      
+
       toast.success('Campaign created successfully!', {theme: 'colored'});
     } catch (error: any) {
       console.error('Error saving campaign:', error);
-      
+
       // Handle duplicate UTM parameters error
       if (error?.response?.status === 409) {
         toast.error('A campaign with these UTM parameters already exists. Please use different values.', {theme: 'colored'});
@@ -174,8 +181,9 @@ export default function DashboardPage() {
         return;
       }
 
-      // Update campaign via API
-      const savedCampaign: Campaign = await Request.Put('/api/campaigns', updatedCampaign);
+      // Update campaign via API with siteId
+      const campaignData = { ...updatedCampaign, siteId: userProfile?.siteId };
+      const savedCampaign: Campaign = await Request.Put('/api/campaigns', campaignData);
 
       // Update state
       setCampaigns(prev => prev.map(c => 

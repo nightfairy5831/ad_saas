@@ -13,9 +13,9 @@ export function handleCorsOptions() {
   })
 }
 
-export function withCors(response: any, status?: number) {
+export function withCors(response: any, status?: number, additionalHeaders?: Record<string, string>) {
   return NextResponse.json(response, {
     status,
-    headers: corsHeaders,
+    headers: { ...corsHeaders, ...additionalHeaders },
   })
 }
