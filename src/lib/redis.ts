@@ -11,4 +11,4 @@ export const redis = new Redis({
   automaticDeserialization: false, // Manual JSON parsing for better performance
 })
 
-export const CACHE_TTL = 60 * 60 * 24 // 24 hours in seconds
+export const CACHE_TTL = 60 * 60 * 24 * 30 // 30 days in seconds
