@@ -142,6 +142,8 @@
             } else if (elementType === 'button') {
                 textElement = parentElement.querySelector('.main-heading-button, .button-text, span, div:not(.button-icon-start):not(.button-icon-end)');
                 if (!textElement) textElement = parentElement;
+            } else if (elementType === 'textblock') {
+                textElement = parentElement.querySelector('p');
             }
 
             return textElement || parentElement;
@@ -155,33 +157,15 @@
             '.custome-purchaseButton': { text: blocks.cta, type: 'button' }
         };
 
-        // Update textblock elements
+        // Add textblock mappings
         if (blocks.textblock && Array.isArray(blocks.textblock)) {
             blocks.textblock.forEach((text, index) => {
                 if (text !== undefined) {
-                    const selector = `.custome-textblock${index + 1}`;
-                    const elements = document.querySelectorAll(selector);
-                    elements.forEach(element => {
-                        // Find the innermost text node while preserving all styling
-                        const styledSpan = element.querySelector('span[style]');
-                        if (styledSpan) {
-                            const oldText = styledSpan.textContent;
-                            styledSpan.textContent = text;
-                            element.classList.add('copyai-updated');
-                            elementsUpdated++;
-                            log(`Updated textblock element: ${selector}`, `"${oldText}" → "${text}"`);
-                        } else {
-                            const textElement = element.querySelector('p, span, div') || element;
-                            const oldText = textElement.textContent;
-                            textElement.textContent = text;
-                            element.classList.add('copyai-updated');
-                            elementsUpdated++;
-                            log(`Updated textblock element: ${selector}`, `"${oldText}" → "${text}"`);
-                        }
-                    });
+                    cssMappings[`.custome-textblock${index + 1}`] = { text: text, type: 'textblock' };
                 }
             });
         }
+
 
         Object.entries(cssMappings).forEach(([selector, config]) => {
             if (!config.text) return;
@@ -191,12 +175,25 @@
                 const textElement = findTextElement(parentElement, config.type);
                 if (textElement) {
                     const oldText = textElement.textContent || textElement.innerHTML;
-                    // Check if there's a styled span to preserve styling
-                    const styledSpan = textElement.querySelector('span[style]');
-                    if (styledSpan) {
-                        styledSpan.textContent = config.text;
+                    // For textblocks, use first span style and preserve structure
+                    if (config.type === 'textblock') {
+                        const firstSpan = textElement.querySelector('span[style]');
+                        if (firstSpan) {
+                            const spanStyle = firstSpan.getAttribute('style');
+                            const parentTags = textElement.innerHTML.match(/^(<[^>]+>)*/)[0];
+                            const closingTags = textElement.innerHTML.match(/(<\/[^>]+>)*$/)[0];
+                            textElement.innerHTML = `${parentTags}<span style="${spanStyle}">${config.text}</span>${closingTags}`;
+                        } else {
+                            textElement.textContent = config.text;
+                        }
                     } else {
-                        textElement.textContent = config.text;
+                        // Check if there's a styled span to preserve styling
+                        const styledSpan = textElement.querySelector('span[style]');
+                        if (styledSpan) {
+                            styledSpan.textContent = config.text;
+                        } else {
+                            textElement.textContent = config.text;
+                        }
                     }
                     parentElement.classList.add('copyai-updated');
                     elementsUpdated++;
