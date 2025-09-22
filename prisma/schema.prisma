@@ -42,6 +42,7 @@ model Campaign {
   headline       String?
   subheadline    String?
   cta            String?
+  textblock      String[]
   landingPageUrl String?        @map("landing_page_url")
   userId         String         @map("user_id")
   createdAt      DateTime       @default(now()) @map("created_at")

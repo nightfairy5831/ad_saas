@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
         copyVariations: {
           headline: campaign.headline || '',
           subheadline: campaign.subheadline || '',
-          cta: campaign.cta || ''
+          cta: campaign.cta || '',
+          textblock: campaign.textblock || []
         },
         clicks: campaign.clicks,
         conversions: campaign.conversions,
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
           headline: copyVariations?.headline,
           subheadline: copyVariations?.subheadline,
           cta: copyVariations?.cta,
+          textblock: copyVariations?.textblock || [],
           landingPageUrl,
           userId: user.id
         }
@@ -93,7 +95,8 @@ export async function POST(request: NextRequest) {
           headline: campaign.headline || 'Welcome!',
           sub: campaign.subheadline || 'Great to see you here',
           bullets: [],
-          cta: campaign.cta || 'Get Started'
+          cta: campaign.cta || 'Get Started',
+          textblock: campaign.textblock || []
         }
       }
 
@@ -110,7 +113,8 @@ export async function POST(request: NextRequest) {
         copyVariations: {
           headline: campaign.headline || '',
           subheadline: campaign.subheadline || '',
-          cta: campaign.cta || ''
+          cta: campaign.cta || '',
+          textblock: campaign.textblock || []
         },
         clicks: 0,
         conversions: 0,
@@ -163,6 +167,7 @@ export async function PUT(request: NextRequest) {
           headline: copyVariations?.headline,
           subheadline: copyVariations?.subheadline,
           cta: copyVariations?.cta,
+          textblock: copyVariations?.textblock || [],
           landingPageUrl
         }
       })
@@ -183,7 +188,8 @@ export async function PUT(request: NextRequest) {
             headline: campaign.headline || 'Welcome!',
             sub: campaign.subheadline || 'Great to see you here',
             bullets: [],
-            cta: campaign.cta || 'Get Started'
+            cta: campaign.cta || 'Get Started',
+            textblock: campaign.textblock || []
           }
         }
 
@@ -201,7 +207,8 @@ export async function PUT(request: NextRequest) {
         copyVariations: {
           headline: campaign.headline || '',
           subheadline: campaign.subheadline || '',
-          cta: campaign.cta || ''
+          cta: campaign.cta || '',
+          textblock: campaign.textblock || []
         },
         clicks: 0,
         conversions: 0,

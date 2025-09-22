@@ -421,16 +421,16 @@ export default function DashboardPage() {
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Variations
+              Active Campaigns
             </CardTitle>
-            <Code className="h-4 w-4 text-primary" />
+            <Code className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {campaigns.filter(c => c.status === 'active').length * 3}
+              {campaigns.filter(c => c.status === 'active').length}
             </div>
             <p className="text-xs text-muted-foreground">
-              3 variations per campaign
+              Currently running
             </p>
           </CardContent>
         </Card>
