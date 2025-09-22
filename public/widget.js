@@ -162,16 +162,18 @@
                     const selector = `.custome-textblock${index + 1}`;
                     const elements = document.querySelectorAll(selector);
                     elements.forEach(element => {
-                        const textElement = element.querySelector('p, span, div') || element;
-                        if (textElement) {
-                            const oldText = textElement.textContent || textElement.innerHTML;
-                            // Check if there's a styled span to preserve styling
-                            const styledSpan = textElement.querySelector('span[style]');
-                            if (styledSpan) {
-                                styledSpan.textContent = text;
-                            } else {
-                                textElement.textContent = text;
-                            }
+                        // Find the innermost text node while preserving all styling
+                        const styledSpan = element.querySelector('span[style]');
+                        if (styledSpan) {
+                            const oldText = styledSpan.textContent;
+                            styledSpan.textContent = text;
+                            element.classList.add('copyai-updated');
+                            elementsUpdated++;
+                            log(`Updated textblock element: ${selector}`, `"${oldText}" → "${text}"`);
+                        } else {
+                            const textElement = element.querySelector('p, span, div') || element;
+                            const oldText = textElement.textContent;
+                            textElement.textContent = text;
                             element.classList.add('copyai-updated');
                             elementsUpdated++;
                             log(`Updated textblock element: ${selector}`, `"${oldText}" → "${text}"`);
