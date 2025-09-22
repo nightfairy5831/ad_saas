@@ -163,7 +163,13 @@
                 const textElement = findTextElement(parentElement, config.type);
                 if (textElement) {
                     const oldText = textElement.textContent || textElement.innerHTML;
-                    textElement.textContent = config.text;
+                    // Check if there's a styled span to preserve styling
+                    const styledSpan = textElement.querySelector('span[style]');
+                    if (styledSpan) {
+                        styledSpan.textContent = config.text;
+                    } else {
+                        textElement.textContent = config.text;
+                    }
                     parentElement.classList.add('copyai-updated');
                     elementsUpdated++;
                     log(`Updated element: ${selector}`, `"${oldText}" → "${config.text}"`);
