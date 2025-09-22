@@ -152,7 +152,7 @@
             '.custome-headline': { text: blocks.headline, type: 'headline' },
             '.custome-subheadline': { text: blocks.sub, type: 'subheadline' },
             '.custome-ctaButton': { text: blocks.cta, type: 'button' },
-            '.custom-purchaseButton': { text: blocks.cta, type: 'button' }
+            '.custome-purchaseButton': { text: blocks.cta, type: 'button' }
         };
 
         Object.entries(cssMappings).forEach(([selector, config]) => {
