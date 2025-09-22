@@ -208,7 +208,7 @@
             let depth = 0;
 
             while (currentElement && depth < maxDepth) {
-                if (currentElement.matches && currentElement.matches('.custom-purchaseButton')) {
+                if (currentElement.matches && currentElement.matches('.custome-purchaseButton')) {
                     trackEvent('PURCHASE_CLICK');
                     return;
                 }
@@ -245,7 +245,7 @@
                 if (updated > 0) {
                     log(`Successfully personalized ${updated} elements for segment: ${currentSegment}`);
                 } else {
-                    log('No elements found to personalize. Make sure your HTML has CSS classes: custome-headline, custome-subheadline, custome-ctaButton, custom-purchaseButton');
+                    log('No elements found to personalize. Make sure your HTML has CSS classes: custome-headline, custome-subheadline, custome-ctaButton, custome-purchaseButton');
                 }
             } else {
                 log('No personalized content received, keeping default content');
