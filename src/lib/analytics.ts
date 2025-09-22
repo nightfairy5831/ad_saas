@@ -17,6 +17,7 @@ interface CampaignWithMetrics {
   headline?: string | null;
   subheadline?: string | null;
   cta?: string | null;
+  textblock?: string[];
   landingPageUrl?: string | null;
   clicks: number;
   conversions: number;
@@ -77,7 +78,8 @@ export async function calculateCampaignMetrics(userId: string): Promise<Campaign
       revenue: Number(stats.revenue.toFixed(2)),
       headline: campaign.headline,
       subheadline: campaign.subheadline,
-      cta: campaign.cta
+      cta: campaign.cta,
+      textblock: campaign.textblock
     }
   })
 

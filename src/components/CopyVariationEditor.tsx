@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Wand2, Save, Eye, Sparkles, Loader2 } from 'lucide-react';
+import { Wand2, Save, Eye, Sparkles, Loader2, Plus, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 interface Campaign {
@@ -19,6 +19,7 @@ interface Campaign {
     headline: string;
     subheadline: string;
     cta: string;
+    textblock?: string[];
   };
   clicks: number;
   conversions: number;
@@ -36,6 +37,7 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
   const [headline, setHeadline] = useState('');
   const [subheadline, setSubheadline] = useState('');
   const [cta, setCta] = useState('');
+  const [textblocks, setTextblocks] = useState<string[]>(['']);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -43,8 +45,25 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
       setHeadline(campaign.copyVariations.headline);
       setSubheadline(campaign.copyVariations.subheadline);
       setCta(campaign.copyVariations.cta);
+      setTextblocks(campaign.copyVariations.textblock || ['']);
     }
   }, [campaign]);
+
+  const addTextblock = () => {
+    if (textblocks.length < 5) {
+      setTextblocks([...textblocks, '']);
+    }
+  };
+
+  const removeTextblock = (index: number) => {
+    setTextblocks(textblocks.filter((_, i) => i !== index));
+  };
+
+  const updateTextblock = (index: number, value: string) => {
+    const updated = [...textblocks];
+    updated[index] = value;
+    setTextblocks(updated);
+  };
 
   const handleSave = async () => {
     if (campaign && !isSaving) {
@@ -55,7 +74,8 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
           copyVariations: {
             headline,
             subheadline,
-            cta
+            cta,
+            textblock: textblocks
           }
         });
         toast.success('Copy variations saved successfully!', { theme: 'colored' });
@@ -179,6 +199,54 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
               />
             </div>
 
+            {/* Text Blocks */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-foreground">
+                  Text Blocks (Optional)
+                </label>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={addTextblock}
+                  disabled={textblocks.length >= 5}
+                  className="text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Block
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Add up to 5 text blocks for additional content
+              </p>
+              <div className="space-y-3">
+                {textblocks.map((block, index) => (
+                  <div key={index} className="flex gap-2">
+                    <div className="flex-1">
+                      <Textarea
+                        value={block}
+                        onChange={(e) => updateTextblock(index, e.target.value)}
+                        placeholder={`Text block ${index + 1} content...`}
+                        rows={2}
+                        className="text-sm"
+                      />
+                    </div>
+                    {textblocks.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeTextblock(index)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <Separator />
 
             <Button 
@@ -219,12 +287,24 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
                   {subheadline || "Your supporting subheadline will appear here to elaborate on your value proposition."}
                 </p>
                 
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-professional-md"
                 >
                   {cta || "Call to Action"}
                 </Button>
+
+                {/* Text Blocks Preview */}
+                {textblocks.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    {textblocks.map((block, index) => (
+                      <div key={index} className="text-sm text-muted-foreground bg-background/50 p-3 rounded border">
+                        <div className="text-xs font-medium mb-1">Text Block {index + 1}:</div>
+                        <div>{block}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               
               <div className="mt-8 pt-4 border-t border-border">

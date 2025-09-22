@@ -155,6 +155,32 @@
             '.custome-purchaseButton': { text: blocks.cta, type: 'button' }
         };
 
+        // Update textblock elements
+        if (blocks.textblock && Array.isArray(blocks.textblock)) {
+            blocks.textblock.forEach((text, index) => {
+                if (text !== undefined) {
+                    const selector = `.custome-textblock${index + 1}`;
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        const textElement = element.querySelector('p, span, div') || element;
+                        if (textElement) {
+                            const oldText = textElement.textContent || textElement.innerHTML;
+                            // Check if there's a styled span to preserve styling
+                            const styledSpan = textElement.querySelector('span[style]');
+                            if (styledSpan) {
+                                styledSpan.textContent = text;
+                            } else {
+                                textElement.textContent = text;
+                            }
+                            element.classList.add('copyai-updated');
+                            elementsUpdated++;
+                            log(`Updated textblock element: ${selector}`, `"${oldText}" → "${text}"`);
+                        }
+                    });
+                }
+            });
+        }
+
         Object.entries(cssMappings).forEach(([selector, config]) => {
             if (!config.text) return;
 
@@ -251,7 +277,7 @@
                 if (updated > 0) {
                     log(`Successfully personalized ${updated} elements for segment: ${currentSegment}`);
                 } else {
-                    log('No elements found to personalize. Make sure your HTML has CSS classes: custome-headline, custome-subheadline, custome-ctaButton, custome-purchaseButton');
+                    log('No elements found to personalize. Make sure your HTML has CSS classes: custome-headline, custome-subheadline, custome-ctaButton, custome-purchaseButton, custome-textblock1-5');
                 }
             } else {
                 log('No personalized content received, keeping default content');

@@ -19,6 +19,7 @@ interface Campaign {
     headline: string;
     subheadline: string;
     cta: string;
+    textblock?: string[];
   };
   clicks: number;
   conversions: number;
@@ -40,6 +41,7 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
   const [headline, setHeadline] = useState('');
   const [subheadline, setSubheadline] = useState('');
   const [cta, setCta] = useState('');
+  const [textblocks, setTextblocks] = useState<string[]>(['']);
   const [selectedUrl, setSelectedUrl] = useState('');
   const [availableUrls, setAvailableUrls] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -69,6 +71,22 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
     loadLandingPages();
   }, []);
 
+  const addTextblock = () => {
+    if (textblocks.length < 5) {
+      setTextblocks([...textblocks, '']);
+    }
+  };
+
+  const removeTextblock = (index: number) => {
+    setTextblocks(textblocks.filter((_, i) => i !== index));
+  };
+
+  const updateTextblock = (index: number, value: string) => {
+    const updated = [...textblocks];
+    updated[index] = value;
+    setTextblocks(updated);
+  };
+
   const handleSave = async () => {
     if (!name || !utmSource || !utmMedium || !utmCampaign || !headline || !selectedUrl) {
       return; // Basic validation
@@ -87,7 +105,8 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
         copyVariations: {
           headline,
           subheadline,
-          cta: cta || 'Get Started'
+          cta: cta || 'Get Started',
+          textblock: textblocks
         },
         clicks: 0,
         conversions: 0,
@@ -259,6 +278,54 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
               className="font-medium"
             />
           </div>
+
+          {/* Text Blocks */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-foreground">
+                Text Blocks (Optional)
+              </label>
+              <Button
+                type="button"
+                size="sm"
+                onClick={addTextblock}
+                disabled={textblocks.length >= 5}
+                className="text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Block
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Add up to 5 text blocks for additional content (matches custome-textblock1 to custome-textblock5)
+            </p>
+            <div className="space-y-3">
+              {textblocks.map((block, index) => (
+                <div key={index} className="flex gap-2">
+                  <div className="flex-1">
+                    <Textarea
+                      value={block}
+                      onChange={(e) => updateTextblock(index, e.target.value)}
+                      placeholder={`Text block ${index + 1} content...`}
+                      rows={2}
+                      className="text-sm"
+                    />
+                  </div>
+                  {textblocks.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeTextblock(index)}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <Separator />
@@ -276,12 +343,24 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
                 {subheadline || "Your supporting subheadline will appear here to elaborate on your value proposition."}
               </p>
               
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-professional-md"
               >
                 {cta || "Get Started Free"}
               </Button>
+
+              {/* Text Blocks Preview */}
+              {textblocks.length > 0 && (
+                <div className="mt-6 space-y-3">
+                  {textblocks.map((block, index) => (
+                    <div key={index} className="text-sm text-muted-foreground bg-background/50 p-3 rounded border">
+                      <div className="text-xs font-medium mb-1">Text Block {index + 1}:</div>
+                      <div>{block}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div className="mt-8 pt-4 border-t border-border">
