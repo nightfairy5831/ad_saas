@@ -57,14 +57,32 @@ export default function SettingsPage() {
   // Load saved project information and landing pages on component mount
   useEffect(() => {
     const loadData = async () => {
-      // Load project info from localStorage
-      const savedProjectInfo = localStorage.getItem('projectInfo');
-      if (savedProjectInfo) {
-        try {
-          const parsed = JSON.parse(savedProjectInfo);
-          setProjectInfo(parsed);
-        } catch (error) {
-          console.error('Failed to parse saved project info:', error);
+      // Load user profile from database first
+      try {
+        const userProfile = await Request.Get('/api/user');
+        setProjectInfo({
+          name: userProfile.projectName || 'My Marketing Campaigns',
+          domain: userProfile.primaryDomain || 'https://mylandingpage.com',
+          siteId: userProfile.siteId || '',
+          createdAt: userProfile.createdAt || ''
+        });
+        setProfile({
+          name: userProfile.name || 'John Doe',
+          email: userProfile.email || 'john@company.com',
+          company: userProfile.company || 'Acme Marketing',
+          timezone: userProfile.timezone || 'America/New_York'
+        });
+      } catch (error) {
+        console.error('Failed to load user profile:', error);
+        // Fallback to localStorage
+        const savedProjectInfo = localStorage.getItem('projectInfo');
+        if (savedProjectInfo) {
+          try {
+            const parsed = JSON.parse(savedProjectInfo);
+            setProjectInfo(parsed);
+          } catch (error) {
+            console.error('Failed to parse saved project info:', error);
+          }
         }
       }
 
