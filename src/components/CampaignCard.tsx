@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { BarChart3, Edit3, ExternalLink, Copy, Archive, ArchiveRestore } from 'lucide-react';
 import { toast } from 'react-toastify';
 
+interface TextWithStyle {
+  text: string;
+  styles?: string;
+}
+
 interface Campaign {
   id: string;
   name: string;
@@ -12,9 +17,10 @@ interface Campaign {
   utmMedium: string;
   utmCampaign: string;
   copyVariations: {
-    headline: string;
-    subheadline: string;
-    cta: string;
+    headline: TextWithStyle | string;
+    subheadline: TextWithStyle | string;
+    cta: TextWithStyle | string;
+    textblock?: (TextWithStyle | string)[];
   };
   clicks: number;
   conversions: number;
@@ -33,6 +39,11 @@ interface CampaignCardProps {
 
 export const CampaignCard = ({ campaign, onClick, onEdit, onViewAnalytics, onArchive, onUnarchive, baseUrl = 'https://yourlandingpage.com' }: CampaignCardProps) => {
   const conversionRate = campaign.clicks > 0 ? ((campaign.conversions / campaign.clicks) * 100).toFixed(1) : '0.0';
+
+  // Helper function to extract text from TextWithStyle or string
+  const getText = (value: TextWithStyle | string): string => {
+    return typeof value === 'string' ? value : value.text;
+  };
   
   // Generate UTM link for this campaign
   const generateUTMLink = () => {
@@ -83,7 +94,7 @@ export const CampaignCard = ({ campaign, onClick, onEdit, onViewAnalytics, onArc
         <div className="bg-accent/50 p-3 rounded-md">
           <h4 className="font-medium text-sm text-foreground mb-1">Current Copy:</h4>
           <p className="text-xs text-muted-foreground line-clamp-2">
-            {campaign.copyVariations.headline}
+            {getText(campaign.copyVariations.headline)}
           </p>
         </div>
 

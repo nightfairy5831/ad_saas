@@ -149,19 +149,35 @@
             return textElement || parentElement;
         }
 
+        // Helper function to extract text and styles from TextWithStyle or string
+        const extractTextAndStyles = (value) => {
+            if (typeof value === 'string') {
+                return { text: value, styles: '' };
+            }
+            if (value && typeof value === 'object' && value.text) {
+                return { text: value.text, styles: value.styles || '' };
+            }
+            return { text: '', styles: '' };
+        };
+
         // Update elements using CSS classes
+        const headlineData = extractTextAndStyles(blocks.headline);
+        const subheadlineData = extractTextAndStyles(blocks.sub || blocks.subheadline);
+        const ctaData = extractTextAndStyles(blocks.cta);
+
         const cssMappings = {
-            '.custome-headline': { text: blocks.headline, type: 'headline' },
-            '.custome-subheadline': { text: blocks.sub, type: 'subheadline' },
-            '.custome-ctaButton': { text: blocks.cta, type: 'button' },
-            '.custome-purchaseButton': { text: blocks.cta, type: 'button' }
+            '.custome-headline': { ...headlineData, type: 'headline' },
+            '.custome-subheadline': { ...subheadlineData, type: 'subheadline' },
+            '.custome-ctaButton': { ...ctaData, type: 'button' },
+            '.custome-purchaseButton': { ...ctaData, type: 'button' }
         };
 
         // Add textblock mappings
         if (blocks.textblock && Array.isArray(blocks.textblock)) {
-            blocks.textblock.forEach((text, index) => {
-                if (text !== undefined) {
-                    cssMappings[`.custome-textblock${index + 1}`] = { text: text, type: 'textblock' };
+            blocks.textblock.forEach((textData, index) => {
+                if (textData !== undefined) {
+                    const textblockData = extractTextAndStyles(textData);
+                    cssMappings[`.custome-textblock${index + 1}`] = { ...textblockData, type: 'textblock' };
                 }
             });
         }
@@ -175,29 +191,23 @@
                 const textElement = findTextElement(parentElement, config.type);
                 if (textElement) {
                     const oldText = textElement.textContent || textElement.innerHTML;
-                    // For textblocks, use first span style and preserve structure
-                    if (config.type === 'textblock') {
-                        const firstSpan = textElement.querySelector('span[style]');
-                        if (firstSpan) {
-                            const spanStyle = firstSpan.getAttribute('style');
-                            const parentTags = textElement.innerHTML.match(/^(<[^>]+>)*/)[0];
-                            const closingTags = textElement.innerHTML.match(/(<\/[^>]+>)*$/)[0];
-                            textElement.innerHTML = `${parentTags}<span style="${spanStyle}">${config.text}</span>${closingTags}`;
-                        } else {
-                            textElement.textContent = config.text;
-                        }
+
+                    // Apply custom styles if provided
+                    if (config.styles) {
+                        textElement.style.cssText = config.styles;
+                    }
+
+                    // Completely replace content with styled content from backend
+                    if (config.styles) {
+                        // Replace entire content with styled span
+                        textElement.innerHTML = `<span style="${config.styles}">${config.text}</span>`;
                     } else {
-                        // Check if there's a styled span to preserve styling
-                        const styledSpan = textElement.querySelector('span[style]');
-                        if (styledSpan) {
-                            styledSpan.textContent = config.text;
-                        } else {
-                            textElement.textContent = config.text;
-                        }
+                        // Replace with plain text if no styles
+                        textElement.textContent = config.text;
                     }
                     parentElement.classList.add('copyai-updated');
                     elementsUpdated++;
-                    log(`Updated element: ${selector}`, `"${oldText}" → "${config.text}"`);
+                    log(`Updated element: ${selector}`, `"${oldText}" → "${config.text}"${config.styles ? ` with styles: ${config.styles}` : ''}`);
                 }
             });
         });

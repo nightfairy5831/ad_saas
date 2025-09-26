@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Wand2, Save, Eye, Sparkles, Loader2, Plus, X } from 'lucide-react';
+import { Save, Eye, Sparkles, Loader2, Plus, X } from 'lucide-react';
+import { TextStyler } from './TextStyler';
 import { toast } from 'react-toastify';
+
+interface TextWithStyle {
+  text: string;
+  styles?: string;
+}
 
 interface Campaign {
   id: string;
@@ -16,10 +20,10 @@ interface Campaign {
   utmMedium: string;
   utmCampaign: string;
   copyVariations: {
-    headline: string;
-    subheadline: string;
-    cta: string;
-    textblock?: string[];
+    headline: TextWithStyle | string;
+    subheadline: TextWithStyle | string;
+    cta: TextWithStyle | string;
+    textblock?: (TextWithStyle | string)[];
   };
   clicks: number;
   conversions: number;
@@ -34,24 +38,49 @@ interface CopyVariationEditorProps {
 }
 
 export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorProps) => {
-  const [headline, setHeadline] = useState('');
-  const [subheadline, setSubheadline] = useState('');
-  const [cta, setCta] = useState('');
-  const [textblocks, setTextblocks] = useState<string[]>(['']);
+  const [headline, setHeadline] = useState<TextWithStyle>({ text: '', styles: '' });
+  const [subheadline, setSubheadline] = useState<TextWithStyle>({ text: '', styles: '' });
+  const [cta, setCta] = useState<TextWithStyle>({ text: '', styles: '' });
+  const [textblocks, setTextblocks] = useState<TextWithStyle[]>([{ text: '', styles: '' }]);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Helper function to normalize text data (backward compatibility)
+  const normalizeText = (value: TextWithStyle | string): TextWithStyle => {
+    if (typeof value === 'string') {
+      return { text: value, styles: '' };
+    }
+    return value;
+  };
+
+  const normalizeTextArray = (value?: (TextWithStyle | string)[]): TextWithStyle[] => {
+    if (!value || value.length === 0) return [{ text: '', styles: '' }];
+    return value.map(normalizeText);
+  };
+
+  // Helper function to parse CSS styles
+  const parseStylesAsReactStyle = (styleString?: string) => {
+    if (!styleString) return {};
+    return styleString.split(';').reduce((acc, style) => {
+      const [property, value] = style.split(':').map(s => s.trim());
+      if (property && value) {
+        acc[property.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] = value;
+      }
+      return acc;
+    }, {} as any);
+  };
 
   useEffect(() => {
     if (campaign) {
-      setHeadline(campaign.copyVariations.headline);
-      setSubheadline(campaign.copyVariations.subheadline);
-      setCta(campaign.copyVariations.cta);
-      setTextblocks(campaign.copyVariations.textblock || ['']);
+      setHeadline(normalizeText(campaign.copyVariations.headline));
+      setSubheadline(normalizeText(campaign.copyVariations.subheadline));
+      setCta(normalizeText(campaign.copyVariations.cta));
+      setTextblocks(normalizeTextArray(campaign.copyVariations.textblock));
     }
   }, [campaign]);
 
   const addTextblock = () => {
     if (textblocks.length < 5) {
-      setTextblocks([...textblocks, '']);
+      setTextblocks([...textblocks, { text: '', styles: '' }]);
     }
   };
 
@@ -59,9 +88,9 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
     setTextblocks(textblocks.filter((_, i) => i !== index));
   };
 
-  const updateTextblock = (index: number, value: string) => {
+  const updateTextblock = (index: number, text: string, styles: string) => {
     const updated = [...textblocks];
-    updated[index] = value;
+    updated[index] = { text, styles };
     setTextblocks(updated);
   };
 
@@ -94,9 +123,9 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
       "Double Your Conversion Rates with AI",
       "Stop Wasting Ad Spend on Generic Landing Pages"
     ];
-    
+
     const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
-    setHeadline(randomSuggestion);
+    setHeadline({ text: randomSuggestion, styles: headline.styles });
   };
 
   if (!campaign) {
@@ -149,52 +178,39 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
           
           <CardContent className="space-y-6">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-foreground">Headline</label>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={generateAISuggestions}
-                  className="text-xs"
-                >
-                  <Wand2 className="w-3 h-3 mr-1" />
-                  AI Suggest
-                </Button>
-              </div>
-              <Input
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
+              <TextStyler
+                value={headline.text}
+                styles={headline.styles}
+                onChange={(text, styles) => setHeadline({ text, styles })}
                 placeholder="Enter your compelling headline..."
+                label="Headline"
                 className="text-lg font-semibold"
+                characterLimit={60}
+                showAISuggest={true}
+                onAISuggest={generateAISuggestions}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Character count: {headline.length}/60
-              </p>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Subheadline
-              </label>
-              <Textarea
-                value={subheadline}
-                onChange={(e) => setSubheadline(e.target.value)}
+              <TextStyler
+                value={subheadline.text}
+                styles={subheadline.styles}
+                onChange={(text, styles) => setSubheadline({ text, styles })}
                 placeholder="Supporting text that elaborates on your value proposition..."
+                label="Subheadline"
+                characterLimit={160}
+                multiline={true}
                 rows={3}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Character count: {subheadline.length}/160
-              </p>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Call to Action
-              </label>
-              <Input
-                value={cta}
-                onChange={(e) => setCta(e.target.value)}
+              <TextStyler
+                value={cta.text}
+                styles={cta.styles}
+                onChange={(text, styles) => setCta({ text, styles })}
                 placeholder="Get Started Free"
+                label="Call to Action"
                 className="font-medium"
               />
             </div>
@@ -223,12 +239,15 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
                 {textblocks.map((block, index) => (
                   <div key={index} className="flex gap-2">
                     <div className="flex-1">
-                      <Textarea
-                        value={block}
-                        onChange={(e) => updateTextblock(index, e.target.value)}
+                      <TextStyler
+                        value={block.text}
+                        styles={block.styles}
+                        onChange={(text, styles) => updateTextblock(index, text, styles)}
                         placeholder={`Text block ${index + 1} content...`}
-                        rows={2}
+                        label={`Text Block ${index + 1}`}
                         className="text-sm"
+                        multiline={true}
+                        rows={2}
                       />
                     </div>
                     {textblocks.length > 1 && (
@@ -279,19 +298,26 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
           <CardContent>
             <div className="bg-gradient-subtle border border-border rounded-lg p-6 space-y-4">
               <div className="text-center space-y-4">
-                <h1 className="text-2xl lg:text-3xl font-bold text-foreground leading-tight">
-                  {headline || "Your Headline Here"}
+                <h1
+                  className="text-2xl lg:text-3xl font-bold text-foreground leading-tight"
+                  style={parseStylesAsReactStyle(headline.styles)}
+                >
+                  {headline.text || "Your Headline Here"}
                 </h1>
-                
-                <p className="text-lg text-muted-foreground leading-relaxed max-w-md mx-auto">
-                  {subheadline || "Your supporting subheadline will appear here to elaborate on your value proposition."}
+
+                <p
+                  className="text-lg text-muted-foreground leading-relaxed max-w-md mx-auto"
+                  style={parseStylesAsReactStyle(subheadline.styles)}
+                >
+                  {subheadline.text || "Your supporting subheadline will appear here to elaborate on your value proposition."}
                 </p>
-                
+
                 <Button
                   size="lg"
                   className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-professional-md"
+                  style={parseStylesAsReactStyle(cta.styles)}
                 >
-                  {cta || "Call to Action"}
+                  {cta.text || "Call to Action"}
                 </Button>
 
                 {/* Text Blocks Preview */}
@@ -300,7 +326,9 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
                     {textblocks.map((block, index) => (
                       <div key={index} className="text-sm text-muted-foreground bg-background/50 p-3 rounded border">
                         <div className="text-xs font-medium mb-1">Text Block {index + 1}:</div>
-                        <div>{block}</div>
+                        <div style={parseStylesAsReactStyle(block.styles)}>
+                          {block.text}
+                        </div>
                       </div>
                     ))}
                   </div>

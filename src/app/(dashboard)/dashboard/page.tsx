@@ -15,6 +15,11 @@ import { CopyVariationEditor } from '@/components/CopyVariationEditor';
 import { UTMGenerator } from '@/components/UTMGenerator';
 import { toast } from 'react-toastify';
 
+interface TextWithStyle {
+  text: string;
+  styles?: string;
+}
+
 interface Campaign {
   id: string;
   name: string;
@@ -23,9 +28,10 @@ interface Campaign {
   utmMedium: string;
   utmCampaign: string;
   copyVariations: {
-    headline: string;
-    subheadline: string;
-    cta: string;
+    headline: TextWithStyle | string;
+    subheadline: TextWithStyle | string;
+    cta: TextWithStyle | string;
+    textblock?: (TextWithStyle | string)[];
   };
   clicks: number;
   conversions: number;
@@ -107,9 +113,10 @@ export default function DashboardPage() {
           utmMedium: 'test',
           utmCampaign: 'example',
           copyVariations: {
-            headline: 'This is a test campaign',
-            subheadline: 'You can hide this demo campaign using the toggle above',
-            cta: 'Try Demo'
+            headline: { text: 'This is a test campaign', styles: '' },
+            subheadline: { text: 'You can hide this demo campaign using the toggle above', styles: '' },
+            cta: { text: 'Try Demo', styles: '' },
+            textblock: []
           },
           clicks: 125,
           conversions: 12,
