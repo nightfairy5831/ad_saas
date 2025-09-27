@@ -131,22 +131,54 @@
         let elementsUpdated = 0;
         const { blocks } = content;
 
-        // Helper function to find the text content element within a parent
-        function findTextElement(parentElement, elementType) {
-            let textElement = null;
+        // Helper function to replace entire target element with new content
+        function replaceTargetElement(targetElement, text, styles, elementType) {
+            // Get the original classes and basic structure
+            const originalClasses = targetElement.className;
+            const originalId = targetElement.id;
 
-            if (elementType === 'headline') {
-                textElement = parentElement.querySelector('h1, h2, h3, h4, h5, h6');
-            } else if (elementType === 'subheadline') {
-                textElement = parentElement.querySelector('h2, h3, h4, p, span');
-            } else if (elementType === 'button') {
-                textElement = parentElement.querySelector('.main-heading-button, .button-text, span, div:not(.button-icon-start):not(.button-icon-end)');
-                if (!textElement) textElement = parentElement;
-            } else if (elementType === 'textblock') {
-                textElement = parentElement.querySelector('p');
+            // Create new content based on element type
+            let newContent = '';
+
+            if (styles) {
+                // Backend provided styles - use them
+                if (elementType === 'headline') {
+                    newContent = `<div><h1><span style="${styles}">${text}</span></h1></div>`;
+                } else if (elementType === 'subheadline') {
+                    newContent = `<div><h2><span style="${styles}">${text}</span></h2></div>`;
+                } else if (elementType === 'button') {
+                    newContent = `<span style="${styles}">${text}</span>`;
+                } else if (elementType === 'textblock') {
+                    newContent = `<div><p><span style="${styles}">${text}</span></p></div>`;
+                }
+            } else {
+                // No backend styles - preserve first element's style but replace content completely
+                const firstElement = targetElement.querySelector('h1, h2, h3, h4, h5, h6, p, span');
+                if (firstElement) {
+                    const computedStyle = window.getComputedStyle(firstElement);
+                    const preservedStyles = [
+                        'color', 'font-family', 'font-size', 'font-weight',
+                        'font-style', 'text-decoration', 'text-align'
+                    ].map(prop => `${prop}: ${computedStyle.getPropertyValue(prop)}`).join('; ');
+
+                    const tagName = firstElement.tagName.toLowerCase();
+                    newContent = `<div><${tagName} style="${preservedStyles}">${text}</${tagName}></div>`;
+                } else {
+                    // Fallback - create basic structure
+                    if (elementType === 'headline') {
+                        newContent = `<div><h1>${text}</h1></div>`;
+                    } else if (elementType === 'subheadline') {
+                        newContent = `<div><h2>${text}</h2></div>`;
+                    } else if (elementType === 'button') {
+                        newContent = `${text}`;
+                    } else if (elementType === 'textblock') {
+                        newContent = `<div><p>${text}</p></div>`;
+                    }
+                }
             }
 
-            return textElement || parentElement;
+            // Replace the entire content
+            targetElement.innerHTML = newContent;
         }
 
         // Helper function to extract text and styles from TextWithStyle or string
@@ -187,28 +219,15 @@
             if (!config.text) return;
 
             const elements = document.querySelectorAll(selector);
-            elements.forEach(parentElement => {
-                const textElement = findTextElement(parentElement, config.type);
-                if (textElement) {
-                    const oldText = textElement.textContent || textElement.innerHTML;
+            elements.forEach(targetElement => {
+                const oldText = targetElement.textContent || targetElement.innerHTML;
 
-                    // Apply custom styles if provided
-                    if (config.styles) {
-                        textElement.style.cssText = config.styles;
-                    }
+                // Replace entire target element content with new structure
+                replaceTargetElement(targetElement, config.text, config.styles, config.type);
 
-                    // Completely replace content with styled content from backend
-                    if (config.styles) {
-                        // Replace entire content with styled span
-                        textElement.innerHTML = `<span style="${config.styles}">${config.text}</span>`;
-                    } else {
-                        // Replace with plain text if no styles
-                        textElement.textContent = config.text;
-                    }
-                    parentElement.classList.add('copyai-updated');
-                    elementsUpdated++;
-                    log(`Updated element: ${selector}`, `"${oldText}" → "${config.text}"${config.styles ? ` with styles: ${config.styles}` : ''}`);
-                }
+                targetElement.classList.add('copyai-updated');
+                elementsUpdated++;
+                log(`Updated element: ${selector}`, `"${oldText}" → "${config.text}"${config.styles ? ` with styles: ${config.styles}` : ''}`);
             });
         });
 
