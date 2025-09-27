@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Plus, X, Save, Loader2 } from 'lucide-react';
+import { TextStyler } from './TextStyler';
 import Request from '@/lib/request';
+
+interface TextWithStyle {
+  text: string;
+  styles?: string;
+}
 
 interface Campaign {
   id: string;
@@ -16,10 +21,10 @@ interface Campaign {
   utmMedium: string;
   utmCampaign: string;
   copyVariations: {
-    headline: string;
-    subheadline: string;
-    cta: string;
-    textblock?: string[];
+    headline: TextWithStyle | string;
+    subheadline: TextWithStyle | string;
+    cta: TextWithStyle | string;
+    textblock?: (TextWithStyle | string)[];
   };
   clicks: number;
   conversions: number;
@@ -38,13 +43,25 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
   const [utmSource, setUtmSource] = useState('');
   const [utmMedium, setUtmMedium] = useState('');
   const [utmCampaign, setUtmCampaign] = useState('');
-  const [headline, setHeadline] = useState('');
-  const [subheadline, setSubheadline] = useState('');
-  const [cta, setCta] = useState('');
-  const [textblocks, setTextblocks] = useState<string[]>(['']);
+  const [headline, setHeadline] = useState<TextWithStyle>({ text: '', styles: '' });
+  const [subheadline, setSubheadline] = useState<TextWithStyle>({ text: '', styles: '' });
+  const [cta, setCta] = useState<TextWithStyle>({ text: '', styles: '' });
+  const [textblocks, setTextblocks] = useState<TextWithStyle[]>([{ text: '', styles: '' }]);
   const [selectedUrl, setSelectedUrl] = useState('');
   const [availableUrls, setAvailableUrls] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+
+  // Helper function to parse CSS styles
+  const parseStylesAsReactStyle = (styleString?: string) => {
+    if (!styleString) return {};
+    return styleString.split(';').reduce((acc, style) => {
+      const [property, value] = style.split(':').map(s => s.trim());
+      if (property && value) {
+        acc[property.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] = value;
+      }
+      return acc;
+    }, {} as any);
+  };
 
   // Load available URLs from landing pages API
   useEffect(() => {
@@ -73,7 +90,7 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
 
   const addTextblock = () => {
     if (textblocks.length < 5) {
-      setTextblocks([...textblocks, '']);
+      setTextblocks([...textblocks, { text: '', styles: '' }]);
     }
   };
 
@@ -81,14 +98,14 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
     setTextblocks(textblocks.filter((_, i) => i !== index));
   };
 
-  const updateTextblock = (index: number, value: string) => {
+  const updateTextblock = (index: number, text: string, styles: string) => {
     const updated = [...textblocks];
-    updated[index] = value;
+    updated[index] = { text, styles };
     setTextblocks(updated);
   };
 
   const handleSave = async () => {
-    if (!name || !utmSource || !utmMedium || !utmCampaign || !headline || !selectedUrl) {
+    if (!name || !utmSource || !utmMedium || !utmCampaign || !headline.text || !selectedUrl) {
       return; // Basic validation
     }
 
@@ -105,7 +122,7 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
         copyVariations: {
           headline,
           subheadline,
-          cta: cta || 'Get Started',
+          cta: cta.text ? cta : { text: 'Get Started', styles: '' },
           textblock: textblocks
         },
         clicks: 0,
@@ -244,37 +261,37 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
           <h3 className="text-lg font-semibold text-foreground">Copy Variations</h3>
           
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Headline *
-            </label>
-            <Input
-              value={headline}
-              onChange={(e) => setHeadline(e.target.value)}
+            <TextStyler
+              value={headline.text}
+              styles={headline.styles}
+              onChange={(text, styles) => setHeadline({ text, styles })}
               placeholder="Your compelling headline here..."
+              label="Headline *"
               className="text-lg font-semibold"
+              characterLimit={60}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Subheadline
-            </label>
-            <Textarea
-              value={subheadline}
-              onChange={(e) => setSubheadline(e.target.value)}
+            <TextStyler
+              value={subheadline.text}
+              styles={subheadline.styles}
+              onChange={(text, styles) => setSubheadline({ text, styles })}
               placeholder="Supporting text that elaborates on your value proposition..."
+              label="Subheadline"
+              characterLimit={160}
+              multiline={true}
               rows={3}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Call to Action
-            </label>
-            <Input
-              value={cta}
-              onChange={(e) => setCta(e.target.value)}
+            <TextStyler
+              value={cta.text}
+              styles={cta.styles}
+              onChange={(text, styles) => setCta({ text, styles })}
               placeholder="Get Started Free"
+              label="Call to Action"
               className="font-medium"
             />
           </div>
@@ -303,12 +320,14 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
               {textblocks.map((block, index) => (
                 <div key={index} className="flex gap-2">
                   <div className="flex-1">
-                    <Textarea
-                      value={block}
-                      onChange={(e) => updateTextblock(index, e.target.value)}
+                    <TextStyler
+                      value={block.text}
+                      styles={block.styles}
+                      onChange={(text, styles) => updateTextblock(index, text, styles)}
                       placeholder={`Text block ${index + 1} content...`}
+                      label={`Text Block ${index + 1}`}
+                      multiline={true}
                       rows={2}
-                      className="text-sm"
                     />
                   </div>
                   {textblocks.length > 1 && (
@@ -317,7 +336,7 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => removeTextblock(index)}
-                      className="text-muted-foreground hover:text-destructive"
+                      className="text-muted-foreground hover:text-destructive mt-6"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -335,29 +354,38 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
           <h3 className="text-lg font-semibold text-foreground">Preview</h3>
           <div className="bg-gradient-subtle border border-border rounded-lg p-6 space-y-4">
             <div className="text-center space-y-4">
-              <h1 className="text-2xl lg:text-3xl font-bold text-foreground leading-tight">
-                {headline || "Your Headline Here"}
+              <h1
+                className="text-2xl lg:text-3xl font-bold text-foreground leading-tight"
+                style={headline.styles ? parseStylesAsReactStyle(headline.styles) : {}}
+              >
+                {headline.text || "Your Headline Here"}
               </h1>
-              
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-md mx-auto">
-                {subheadline || "Your supporting subheadline will appear here to elaborate on your value proposition."}
+
+              <p
+                className="text-lg text-muted-foreground leading-relaxed max-w-md mx-auto"
+                style={subheadline.styles ? parseStylesAsReactStyle(subheadline.styles) : {}}
+              >
+                {subheadline.text || "Your supporting subheadline will appear here to elaborate on your value proposition."}
               </p>
-              
+
               <Button
                 size="lg"
                 className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-professional-md"
+                style={cta.styles ? parseStylesAsReactStyle(cta.styles) : {}}
               >
-                {cta || "Get Started Free"}
+                {cta.text || "Get Started Free"}
               </Button>
 
               {/* Text Blocks Preview */}
-              {textblocks.length > 0 && (
+              {textblocks.length > 0 && textblocks.some(block => block.text) && (
                 <div className="mt-6 space-y-3">
                   {textblocks.map((block, index) => (
-                    <div key={index} className="text-sm text-muted-foreground bg-background/50 p-3 rounded border">
-                      <div className="text-xs font-medium mb-1">Text Block {index + 1}:</div>
-                      <div>{block}</div>
-                    </div>
+                    block.text && (
+                      <div key={index} className="text-sm text-muted-foreground bg-background/50 p-3 rounded border">
+                        <div className="text-xs font-medium mb-1">Text Block {index + 1}:</div>
+                        <div style={block.styles ? parseStylesAsReactStyle(block.styles) : {}}>{block.text}</div>
+                      </div>
+                    )
                   ))}
                 </div>
               )}
@@ -376,10 +404,10 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
 
         {/* Actions */}
         <div className="flex space-x-3 pt-4">
-          <Button 
+          <Button
             onClick={handleSave}
             className="flex-1 bg-gradient-success text-success-foreground hover:opacity-90"
-            disabled={!name || !utmSource || !utmMedium || !utmCampaign || !headline || !selectedUrl || isCreating}
+            disabled={!name || !utmSource || !utmMedium || !utmCampaign || !headline.text || !selectedUrl || isCreating}
           >
             {isCreating ? (
               <>

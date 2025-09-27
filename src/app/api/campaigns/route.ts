@@ -17,6 +17,22 @@ export async function GET(request: NextRequest) {
       // Get campaigns with real analytics data
       const campaignMetrics = await calculateCampaignMetrics(user.id)
 
+      // Helper function to parse stored JSON or return as string
+      const parseTextWithStyle = (value: any) => {
+        if (!value) return { text: '', styles: '' };
+        try {
+          const parsed = JSON.parse(value);
+          return parsed.text !== undefined ? parsed : { text: value, styles: '' };
+        } catch {
+          return { text: value, styles: '' };
+        }
+      };
+
+      const parseTextblockArray = (textblocks: any) => {
+        if (!textblocks || !Array.isArray(textblocks)) return [];
+        return textblocks.map(parseTextWithStyle);
+      };
+
       // Transform to match frontend interface
       const transformedCampaigns = campaignMetrics.map(campaign => ({
         id: campaign.id,
@@ -26,10 +42,10 @@ export async function GET(request: NextRequest) {
         utmMedium: campaign.utmMedium,
         utmCampaign: campaign.utmCampaign,
         copyVariations: {
-          headline: campaign.headline || '',
-          subheadline: campaign.subheadline || '',
-          cta: campaign.cta || '',
-          textblock: campaign.textblock || []
+          headline: parseTextWithStyle(campaign.headline),
+          subheadline: parseTextWithStyle(campaign.subheadline),
+          cta: parseTextWithStyle(campaign.cta),
+          textblock: parseTextblockArray(campaign.textblock)
         },
         clicks: campaign.clicks,
         conversions: campaign.conversions,
@@ -63,6 +79,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Site ID is required' }, { status: 400 })
     }
 
+    // Helper function to serialize TextWithStyle to JSON string
+    const serializeTextWithStyle = (value: any) => {
+      if (!value) return '';
+      if (typeof value === 'string') return value;
+      if (value.text !== undefined) {
+        return JSON.stringify(value);
+      }
+      return value;
+    };
+
+    const serializeTextblockArray = (textblocks: any) => {
+      if (!textblocks || !Array.isArray(textblocks)) return [];
+      return textblocks.map(serializeTextWithStyle);
+    };
+
     try {
       const campaign = await prisma.campaign.create({
         data: {
@@ -71,10 +102,10 @@ export async function POST(request: NextRequest) {
           utmSource,
           utmMedium,
           utmCampaign,
-          headline: copyVariations?.headline,
-          subheadline: copyVariations?.subheadline,
-          cta: copyVariations?.cta,
-          textblock: copyVariations?.textblock || [],
+          headline: serializeTextWithStyle(copyVariations?.headline),
+          subheadline: serializeTextWithStyle(copyVariations?.subheadline),
+          cta: serializeTextWithStyle(copyVariations?.cta),
+          textblock: serializeTextblockArray(copyVariations?.textblock),
           landingPageUrl,
           userId: user.id
         }
@@ -102,6 +133,22 @@ export async function POST(request: NextRequest) {
 
       await redis.set(contentKey, contentData, { ex: CACHE_TTL })
 
+      // Helper function to parse stored JSON or return as string
+      const parseTextWithStyleForResponse = (value: any) => {
+        if (!value) return { text: '', styles: '' };
+        try {
+          const parsed = JSON.parse(value);
+          return parsed.text !== undefined ? parsed : { text: value, styles: '' };
+        } catch {
+          return { text: value, styles: '' };
+        }
+      };
+
+      const parseTextblockArrayForResponse = (textblocks: any) => {
+        if (!textblocks || !Array.isArray(textblocks)) return [];
+        return textblocks.map(parseTextWithStyleForResponse);
+      };
+
       // Transform to match frontend interface
       const transformedCampaign = {
         id: campaign.id,
@@ -111,10 +158,10 @@ export async function POST(request: NextRequest) {
         utmMedium: campaign.utmMedium,
         utmCampaign: campaign.utmCampaign,
         copyVariations: {
-          headline: campaign.headline || '',
-          subheadline: campaign.subheadline || '',
-          cta: campaign.cta || '',
-          textblock: campaign.textblock || []
+          headline: parseTextWithStyleForResponse(campaign.headline),
+          subheadline: parseTextWithStyleForResponse(campaign.subheadline),
+          cta: parseTextWithStyleForResponse(campaign.cta),
+          textblock: parseTextblockArrayForResponse(campaign.textblock)
         },
         clicks: 0,
         conversions: 0,
@@ -152,6 +199,21 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { id, name, status, utmSource, utmMedium, utmCampaign, copyVariations, landingPageUrl, siteId } = body
 
+    // Helper function to serialize TextWithStyle to JSON string
+    const serializeTextWithStyle = (value: any) => {
+      if (!value) return '';
+      if (typeof value === 'string') return value;
+      if (value.text !== undefined) {
+        return JSON.stringify(value);
+      }
+      return value;
+    };
+
+    const serializeTextblockArray = (textblocks: any) => {
+      if (!textblocks || !Array.isArray(textblocks)) return [];
+      return textblocks.map(serializeTextWithStyle);
+    };
+
     try {
       const campaign = await prisma.campaign.update({
         where: {
@@ -164,10 +226,10 @@ export async function PUT(request: NextRequest) {
           utmSource,
           utmMedium,
           utmCampaign,
-          headline: copyVariations?.headline,
-          subheadline: copyVariations?.subheadline,
-          cta: copyVariations?.cta,
-          textblock: copyVariations?.textblock || [],
+          headline: serializeTextWithStyle(copyVariations?.headline),
+          subheadline: serializeTextWithStyle(copyVariations?.subheadline),
+          cta: serializeTextWithStyle(copyVariations?.cta),
+          textblock: serializeTextblockArray(copyVariations?.textblock),
           landingPageUrl
         }
       })
@@ -182,19 +244,46 @@ export async function PUT(request: NextRequest) {
 
         const contentKey = `content:${siteId}:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}:${normalizedGclid}:${normalizedFbclid}`
 
+        // Helper to extract text and styles for Redis
+        const parseForRedis = (value: any) => {
+          if (!value) return '';
+          try {
+            const parsed = JSON.parse(value);
+            return parsed; // Store the full TextWithStyle object
+          } catch {
+            return { text: value, styles: '' }; // Legacy format
+          }
+        };
+
         const contentData = {
           segment: campaign.name,
           blocks: {
-            headline: campaign.headline || 'Welcome!',
-            sub: campaign.subheadline || 'Great to see you here',
+            headline: parseForRedis(campaign.headline) || { text: 'Welcome!', styles: '' },
+            sub: parseForRedis(campaign.subheadline) || { text: 'Great to see you here', styles: '' },
             bullets: [],
-            cta: campaign.cta || 'Get Started',
-            textblock: campaign.textblock || []
+            cta: parseForRedis(campaign.cta) || { text: 'Get Started', styles: '' },
+            textblock: (campaign.textblock || []).map(parseForRedis)
           }
         }
 
         await redis.set(contentKey, contentData, { ex: CACHE_TTL })
       }
+
+      // Helper function to parse stored JSON or return as string for PUT response
+      const parseTextWithStyleForResponse = (value: any) => {
+        if (!value) return { text: '', styles: '' };
+        try {
+          const parsed = JSON.parse(value);
+          return parsed.text !== undefined ? parsed : { text: value, styles: '' };
+        } catch {
+          return { text: value, styles: '' };
+        }
+      };
+
+      const parseTextblockArrayForResponse = (textblocks: any) => {
+        if (!textblocks || !Array.isArray(textblocks)) return [];
+        return textblocks.map(parseTextWithStyleForResponse);
+      };
 
       // Transform to match frontend interface
       const transformedCampaign = {
@@ -205,10 +294,10 @@ export async function PUT(request: NextRequest) {
         utmMedium: campaign.utmMedium,
         utmCampaign: campaign.utmCampaign,
         copyVariations: {
-          headline: campaign.headline || '',
-          subheadline: campaign.subheadline || '',
-          cta: campaign.cta || '',
-          textblock: campaign.textblock || []
+          headline: parseTextWithStyleForResponse(campaign.headline),
+          subheadline: parseTextWithStyleForResponse(campaign.subheadline),
+          cta: parseTextWithStyleForResponse(campaign.cta),
+          textblock: parseTextblockArrayForResponse(campaign.textblock)
         },
         clicks: 0,
         conversions: 0,
