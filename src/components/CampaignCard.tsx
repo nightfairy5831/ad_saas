@@ -150,7 +150,7 @@ export const CampaignCard = ({ campaign, onClick, onEdit, onViewAnalytics, onArc
             <BarChart3 className="w-3 h-3 mr-1" />
             Analytics
           </Button>
-          {campaign.status === 'paused' && (
+          {(campaign.status === 'paused' || campaign.status === 'draft') && (
             <Button 
               variant="outline" 
               size="sm" 
