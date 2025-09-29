@@ -138,7 +138,7 @@ export const CampaignRowView = ({ campaign, onClick, onEdit, onViewAnalytics, on
             }} className="h-8 w-8 p-0">
               <BarChart3 className="w-3 h-3" />
             </Button>
-            {campaign.status === 'paused' && (
+            {(campaign.status === 'paused' || campaign.status === 'draft') && (
               <Button 
                 variant="ghost" 
                 size="sm" 
