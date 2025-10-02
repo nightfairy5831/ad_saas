@@ -184,6 +184,15 @@
         // Helper function to extract text and styles from TextWithStyle or string
         const extractTextAndStyles = (value) => {
             if (typeof value === 'string') {
+                // Try to parse as JSON first (in case backend returns stringified JSON)
+                try {
+                    const parsed = JSON.parse(value);
+                    if (parsed && typeof parsed === 'object' && parsed.text) {
+                        return { text: parsed.text, styles: parsed.styles || '' };
+                    }
+                } catch (e) {
+                    // Not JSON, treat as plain text
+                }
                 return { text: value, styles: '' };
             }
             if (value && typeof value === 'object' && value.text) {
