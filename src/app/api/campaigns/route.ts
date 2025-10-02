@@ -120,14 +120,25 @@ export async function POST(request: NextRequest) {
 
       const contentKey = `content:${siteId}:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}:${normalizedGclid}:${normalizedFbclid}`
 
+      // Helper to extract text and styles for Redis
+      const parseForRedis = (value: any) => {
+        if (!value) return '';
+        try {
+          const parsed = JSON.parse(value);
+          return parsed; // Store the full TextWithStyle object
+        } catch {
+          return { text: value, styles: '' }; // Legacy format
+        }
+      };
+
       const contentData = {
         segment: campaign.name,
         blocks: {
-          headline: campaign.headline || 'Welcome!',
-          sub: campaign.subheadline || 'Great to see you here',
+          headline: parseForRedis(campaign.headline) || { text: 'Welcome!', styles: '' },
+          sub: parseForRedis(campaign.subheadline) || { text: 'Great to see you here', styles: '' },
           bullets: [],
-          cta: campaign.cta || 'Get Started',
-          textblock: campaign.textblock || []
+          cta: parseForRedis(campaign.cta) || { text: 'Get Started', styles: '' },
+          textblock: (campaign.textblock || []).map(parseForRedis)
         }
       }
 
