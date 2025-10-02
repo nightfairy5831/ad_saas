@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Edit3, ExternalLink, Copy, Archive, ArchiveRestore, Play } from 'lucide-react';
+import { BarChart3, Edit3, ExternalLink, Copy, Archive, ArchiveRestore, Play, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 interface TextWithStyle {
@@ -34,10 +34,11 @@ interface CampaignCardProps {
   onViewAnalytics: () => void;
   onArchive?: () => void;
   onUnarchive?: () => void;
+  onDelete?: () => void;
   baseUrl?: string;
 }
 
-export const CampaignCard = ({ campaign, onClick, onEdit, onViewAnalytics, onArchive, onUnarchive, baseUrl = 'https://yourlandingpage.com' }: CampaignCardProps) => {
+export const CampaignCard = ({ campaign, onClick, onEdit, onViewAnalytics, onArchive, onUnarchive, onDelete, baseUrl = 'https://yourlandingpage.com' }: CampaignCardProps) => {
   const conversionRate = campaign.clicks > 0 ? ((campaign.conversions / campaign.clicks) * 100).toFixed(1) : '0.0';
 
   // Helper function to extract text from TextWithStyle or string
@@ -151,10 +152,10 @@ export const CampaignCard = ({ campaign, onClick, onEdit, onViewAnalytics, onArc
             Analytics
           </Button>
           {(campaign.status === 'paused' || campaign.status === 'draft') && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex-1" 
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
               onClick={(e) => {
                 e.stopPropagation();
                 if (campaign.archived) {
