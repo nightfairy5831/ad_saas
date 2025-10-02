@@ -62,6 +62,7 @@ export default function DashboardPage() {
   const [landingPageUrl, setLandingPageUrl] = useState('https://yourlandingpage.com');
   const [isEditingUrl, setIsEditingUrl] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [deletingCampaignId, setDeletingCampaignId] = useState<string | null>(null);
 
   // Load campaigns, analytics and user profile
   useEffect(() => {
@@ -251,7 +252,7 @@ export default function DashboardPage() {
     try {
       // Handle test campaign (local only)
       if (campaignId === 'test-campaign') {
-        setCampaigns(prev => prev.map(c => 
+        setCampaigns(prev => prev.map(c =>
           c.id === campaignId ? { ...c, archived: false } : c
         ));
         return;
@@ -262,17 +263,47 @@ export default function DashboardPage() {
       if (campaign) {
         const updatedCampaign = { ...campaign, archived: false };
         const savedCampaign: Campaign = await Request.Put('/api/campaigns', updatedCampaign);
-        
+
         // Update state
-        setCampaigns(prev => prev.map(c => 
+        setCampaigns(prev => prev.map(c =>
           c.id === savedCampaign.id ? savedCampaign : c
         ));
-        
+
         toast.success('Campaign restored successfully!', {theme: 'colored'});
       }
     } catch (error) {
       console.error('Error restoring campaign:', error);
       toast.error('Failed to restore campaign. Please try again.', {theme: 'colored'});
+    }
+  };
+
+  const handleDeleteCampaign = async (campaignId: string) => {
+    if (!confirm('Are you sure you want to delete this campaign? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingCampaignId(campaignId);
+
+    try {
+      // Handle test campaign (local only)
+      if (campaignId === 'test-campaign') {
+        setCampaigns(prev => prev.filter(c => c.id !== campaignId));
+        toast.success('Campaign deleted successfully!', {theme: 'colored'});
+        return;
+      }
+
+      // Delete campaign via API
+      await Request.Delete('/api/campaigns', { id: campaignId });
+
+      // Update state
+      setCampaigns(prev => prev.filter(c => c.id !== campaignId));
+
+      toast.success('Campaign deleted successfully!', {theme: 'colored'});
+    } catch (error) {
+      console.error('Error deleting campaign:', error);
+      toast.error('Failed to delete campaign. Please try again.', {theme: 'colored'});
+    } finally {
+      setDeletingCampaignId(null);
     }
   };
 
@@ -288,7 +319,16 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 relative">
+      {/* Delete Spinner Overlay */}
+      {deletingCampaignId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg shadow-lg flex flex-col items-center space-y-4">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-foreground font-medium">Deleting campaign...</p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -510,6 +550,7 @@ export default function DashboardPage() {
                       }}
                       onArchive={() => handleArchiveCampaign(campaign.id)}
                       onUnarchive={() => handleUnarchiveCampaign(campaign.id)}
+                      onDelete={() => handleDeleteCampaign(campaign.id)}
                       baseUrl={campaign.landingPageUrl || landingPageUrl}
                     />
                   ))}
@@ -538,6 +579,7 @@ export default function DashboardPage() {
                       }}
                       onArchive={() => handleArchiveCampaign(campaign.id)}
                       onUnarchive={() => handleUnarchiveCampaign(campaign.id)}
+                      onDelete={() => handleDeleteCampaign(campaign.id)}
                       baseUrl={campaign.landingPageUrl || landingPageUrl}
                     />
                   ))}

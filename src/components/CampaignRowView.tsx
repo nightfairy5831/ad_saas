@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Edit3, Copy, ExternalLink, Archive, ArchiveRestore } from 'lucide-react';
+import { BarChart3, Edit3, Copy, ExternalLink, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 interface TextWithStyle {
@@ -34,10 +34,11 @@ interface CampaignRowViewProps {
   onViewAnalytics: () => void;
   onArchive?: () => void;
   onUnarchive?: () => void;
+  onDelete?: () => void;
   baseUrl?: string;
 }
 
-export const CampaignRowView = ({ campaign, onClick, onEdit, onViewAnalytics, onArchive, onUnarchive, baseUrl = 'https://yourlandingpage.com' }: CampaignRowViewProps) => {
+export const CampaignRowView = ({ campaign, onClick, onEdit, onViewAnalytics, onArchive, onUnarchive, onDelete, baseUrl = 'https://yourlandingpage.com' }: CampaignRowViewProps) => {
   const conversionRate = ((campaign.conversions / campaign.clicks) * 100).toFixed(1);
 
   // Helper function to extract text from TextWithStyle or string
@@ -139,9 +140,9 @@ export const CampaignRowView = ({ campaign, onClick, onEdit, onViewAnalytics, on
               <BarChart3 className="w-3 h-3" />
             </Button>
             {(campaign.status === 'paused' || campaign.status === 'draft') && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (campaign.archived) {
@@ -149,7 +150,7 @@ export const CampaignRowView = ({ campaign, onClick, onEdit, onViewAnalytics, on
                   } else {
                     onArchive?.();
                   }
-                }} 
+                }}
                 className="h-8 w-8 p-0"
               >
                 {campaign.archived ? (
@@ -159,6 +160,17 @@ export const CampaignRowView = ({ campaign, onClick, onEdit, onViewAnalytics, on
                 )}
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete?.();
+              }}
+              className="h-8 w-8 p-0"
+            >
+              <Trash2 className="w-3 h-3 text-destructive" />
+            </Button>
           </div>
         </div>
       </CardContent>
