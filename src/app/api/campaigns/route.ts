@@ -41,6 +41,8 @@ export async function GET(request: NextRequest) {
         utmSource: campaign.utmSource,
         utmMedium: campaign.utmMedium,
         utmCampaign: campaign.utmCampaign,
+        utmContent: campaign.utmContent,
+        utmTerm: campaign.utmTerm,
         copyVariations: {
           headline: parseTextWithStyle(campaign.headline),
           subheadline: parseTextWithStyle(campaign.subheadline),
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest) {
     const user = { id: userResult }
 
     const body = await request.json()
-    const { name, status, utmSource, utmMedium, utmCampaign, copyVariations, landingPageUrl, siteId } = body
+    const { name, status, utmSource, utmMedium, utmCampaign, utmContent, utmTerm, copyVariations, landingPageUrl, siteId } = body
 
     // Validate siteId is provided
     if (!siteId) {
@@ -102,6 +104,8 @@ export async function POST(request: NextRequest) {
           utmSource,
           utmMedium,
           utmCampaign,
+          utmContent,
+          utmTerm,
           headline: serializeTextWithStyle(copyVariations?.headline),
           subheadline: serializeTextWithStyle(copyVariations?.subheadline),
           cta: serializeTextWithStyle(copyVariations?.cta),
@@ -168,6 +172,8 @@ export async function POST(request: NextRequest) {
         utmSource: campaign.utmSource,
         utmMedium: campaign.utmMedium,
         utmCampaign: campaign.utmCampaign,
+        utmContent: campaign.utmContent,
+        utmTerm: campaign.utmTerm,
         copyVariations: {
           headline: parseTextWithStyleForResponse(campaign.headline),
           subheadline: parseTextWithStyleForResponse(campaign.subheadline),
@@ -208,7 +214,7 @@ export async function PUT(request: NextRequest) {
     const user = { id: userResult }
 
     const body = await request.json()
-    const { id, name, status, utmSource, utmMedium, utmCampaign, copyVariations, landingPageUrl, siteId } = body
+    const { id, name, status, utmSource, utmMedium, utmCampaign, utmContent, utmTerm, copyVariations, landingPageUrl, siteId } = body
 
     // Helper function to serialize TextWithStyle to JSON string
     const serializeTextWithStyle = (value: any) => {
@@ -237,6 +243,8 @@ export async function PUT(request: NextRequest) {
           utmSource,
           utmMedium,
           utmCampaign,
+          utmContent,
+          utmTerm,
           headline: serializeTextWithStyle(copyVariations?.headline),
           subheadline: serializeTextWithStyle(copyVariations?.subheadline),
           cta: serializeTextWithStyle(copyVariations?.cta),
@@ -304,6 +312,8 @@ export async function PUT(request: NextRequest) {
         utmSource: campaign.utmSource,
         utmMedium: campaign.utmMedium,
         utmCampaign: campaign.utmCampaign,
+        utmContent: campaign.utmContent,
+        utmTerm: campaign.utmTerm,
         copyVariations: {
           headline: parseTextWithStyleForResponse(campaign.headline),
           subheadline: parseTextWithStyleForResponse(campaign.subheadline),

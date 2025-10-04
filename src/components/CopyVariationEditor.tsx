@@ -6,30 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Save, Eye, Sparkles, Loader2, Plus, X } from 'lucide-react';
 import { TextStyler } from './TextStyler';
 import { toast } from 'react-toastify';
-
-interface TextWithStyle {
-  text: string;
-  styles?: string;
-}
-
-interface Campaign {
-  id: string;
-  name: string;
-  status: 'active' | 'draft' | 'paused';
-  utmSource: string;
-  utmMedium: string;
-  utmCampaign: string;
-  copyVariations: {
-    headline: TextWithStyle | string;
-    subheadline: TextWithStyle | string;
-    cta: TextWithStyle | string;
-    textblock?: (TextWithStyle | string)[];
-  };
-  clicks: number;
-  conversions: number;
-  archived: boolean;
-  landingPageUrl?: string;
-}
+import { Campaign, TextWithStyle, normalizeText, normalizeTextArray, parseStylesAsReactStyle } from '@/types/campaign';
 
 interface CopyVariationEditorProps {
   campaign: Campaign | null;
@@ -43,31 +20,6 @@ export const CopyVariationEditor = ({ campaign, onSave }: CopyVariationEditorPro
   const [cta, setCta] = useState<TextWithStyle>({ text: '', styles: '' });
   const [textblocks, setTextblocks] = useState<TextWithStyle[]>([{ text: '', styles: '' }]);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Helper function to normalize text data (backward compatibility)
-  const normalizeText = (value: TextWithStyle | string): TextWithStyle => {
-    if (typeof value === 'string') {
-      return { text: value, styles: '' };
-    }
-    return value;
-  };
-
-  const normalizeTextArray = (value?: (TextWithStyle | string)[]): TextWithStyle[] => {
-    if (!value || value.length === 0) return [{ text: '', styles: '' }];
-    return value.map(normalizeText);
-  };
-
-  // Helper function to parse CSS styles
-  const parseStylesAsReactStyle = (styleString?: string) => {
-    if (!styleString) return {};
-    return styleString.split(';').reduce((acc, style) => {
-      const [property, value] = style.split(':').map(s => s.trim());
-      if (property && value) {
-        acc[property.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] = value;
-      }
-      return acc;
-    }, {} as any);
-  };
 
   useEffect(() => {
     if (campaign) {

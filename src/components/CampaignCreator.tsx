@@ -7,30 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Plus, X, Save, Loader2 } from 'lucide-react';
 import { TextStyler } from './TextStyler';
 import Request from '@/lib/request';
-
-interface TextWithStyle {
-  text: string;
-  styles?: string;
-}
-
-interface Campaign {
-  id: string;
-  name: string;
-  status: 'active' | 'draft' | 'paused';
-  utmSource: string;
-  utmMedium: string;
-  utmCampaign: string;
-  copyVariations: {
-    headline: TextWithStyle | string;
-    subheadline: TextWithStyle | string;
-    cta: TextWithStyle | string;
-    textblock?: (TextWithStyle | string)[];
-  };
-  clicks: number;
-  conversions: number;
-  archived: boolean;
-  landingPageUrl?: string;
-}
+import { Campaign, TextWithStyle, parseStylesAsReactStyle } from '@/types/campaign';
 
 interface CampaignCreatorProps {
   onSave: (campaign: Campaign) => void;
@@ -43,6 +20,8 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
   const [utmSource, setUtmSource] = useState('');
   const [utmMedium, setUtmMedium] = useState('');
   const [utmCampaign, setUtmCampaign] = useState('');
+  const [utmContent, setUtmContent] = useState('');
+  const [utmTerm, setUtmTerm] = useState('');
   const [headline, setHeadline] = useState<TextWithStyle>({ text: '', styles: '' });
   const [subheadline, setSubheadline] = useState<TextWithStyle>({ text: '', styles: '' });
   const [cta, setCta] = useState<TextWithStyle>({ text: '', styles: '' });
@@ -50,18 +29,6 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
   const [selectedUrl, setSelectedUrl] = useState('');
   const [availableUrls, setAvailableUrls] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
-
-  // Helper function to parse CSS styles
-  const parseStylesAsReactStyle = (styleString?: string) => {
-    if (!styleString) return {};
-    return styleString.split(';').reduce((acc, style) => {
-      const [property, value] = style.split(':').map(s => s.trim());
-      if (property && value) {
-        acc[property.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] = value;
-      }
-      return acc;
-    }, {} as any);
-  };
 
   // Load available URLs from landing pages API
   useEffect(() => {
@@ -119,6 +86,8 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
         utmSource,
         utmMedium,
         utmCampaign,
+        utmContent: utmContent || undefined,
+        utmTerm: utmTerm || undefined,
         copyVariations: {
           headline,
           subheadline,
@@ -249,6 +218,28 @@ export const CampaignCreator = ({ onSave, onCancel }: CampaignCreatorProps) => {
                 value={utmCampaign}
                 onChange={(e) => setUtmCampaign(e.target.value)}
                 placeholder="spring_sale, leadgen"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Content (utm_content)
+              </label>
+              <Input
+                value={utmContent}
+                onChange={(e) => setUtmContent(e.target.value)}
+                placeholder="logolink, textlink"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Term (utm_term)
+              </label>
+              <Input
+                value={utmTerm}
+                onChange={(e) => setUtmTerm(e.target.value)}
+                placeholder="keyword1, keyword2"
               />
             </div>
           </div>
