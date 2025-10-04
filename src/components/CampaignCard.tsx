@@ -3,29 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BarChart3, Edit3, ExternalLink, Copy, Archive, ArchiveRestore, Play, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-
-interface TextWithStyle {
-  text: string;
-  styles?: string;
-}
-
-interface Campaign {
-  id: string;
-  name: string;
-  status: 'active' | 'draft' | 'paused';
-  utmSource: string;
-  utmMedium: string;
-  utmCampaign: string;
-  copyVariations: {
-    headline: TextWithStyle | string;
-    subheadline: TextWithStyle | string;
-    cta: TextWithStyle | string;
-    textblock?: (TextWithStyle | string)[];
-  };
-  clicks: number;
-  conversions: number;
-  archived: boolean;
-}
+import { Campaign, getText } from '@/types/campaign';
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -41,11 +19,6 @@ interface CampaignCardProps {
 export const CampaignCard = ({ campaign, onClick, onEdit, onViewAnalytics, onArchive, onUnarchive, onDelete, baseUrl = 'https://yourlandingpage.com' }: CampaignCardProps) => {
   const conversionRate = campaign.clicks > 0 ? ((campaign.conversions / campaign.clicks) * 100).toFixed(1) : '0.0';
 
-  // Helper function to extract text from TextWithStyle or string
-  const getText = (value: TextWithStyle | string): string => {
-    return typeof value === 'string' ? value : value.text;
-  };
-  
   // Generate UTM link for this campaign
   const generateUTMLink = () => {
     const params = new URLSearchParams({
@@ -53,6 +26,8 @@ export const CampaignCard = ({ campaign, onClick, onEdit, onViewAnalytics, onArc
       utm_medium: campaign.utmMedium,
       utm_campaign: campaign.utmCampaign
     });
+    if (campaign.utmContent) params.set('utm_content', campaign.utmContent);
+    if (campaign.utmTerm) params.set('utm_term', campaign.utmTerm);
     return `${baseUrl}?${params.toString()}`;
   };
 

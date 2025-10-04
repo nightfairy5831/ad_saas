@@ -44,8 +44,8 @@
     function getURLParameters() {
         const params = new URLSearchParams(window.location.search);
         const utmParams = {};
-        
-        // Standard UTM parameters
+
+        // All 5 standard UTM parameters
         ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(param => {
             const value = params.get(param);
             if (value) {

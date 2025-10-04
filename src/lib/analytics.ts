@@ -14,6 +14,8 @@ interface CampaignWithMetrics {
   utmSource: string;
   utmMedium: string;
   utmCampaign: string;
+  utmContent?: string | null;
+  utmTerm?: string | null;
   headline?: string | null;
   subheadline?: string | null;
   cta?: string | null;
@@ -71,6 +73,8 @@ export async function calculateCampaignMetrics(userId: string): Promise<Campaign
       utmSource: campaign.utmSource,
       utmMedium: campaign.utmMedium,
       utmCampaign: campaign.utmCampaign,
+      utmContent: campaign.utmContent,
+      utmTerm: campaign.utmTerm,
       landingPageUrl: campaign.landingPageUrl,
       clicks: totalClicks,
       conversions: stats.purchases,
