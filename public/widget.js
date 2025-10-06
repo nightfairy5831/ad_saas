@@ -54,15 +54,6 @@
             }
         });
 
-        // Google and Facebook click IDs
-        ['gclid', 'fbclid', 'msclkid'].forEach(param => {
-            const value = params.get(param);
-            if (value) {
-                utmParams[param] = value;
-                log(`Found ${param}:`, value);
-            }
-        });
-
         return utmParams;
     }
 
