@@ -11,18 +11,16 @@ export async function OPTIONS() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { utm_campaign, utm_source, utm_medium, gclid, fbclid, site_id } = body
+    const { utm_campaign, utm_source, utm_medium, site_id } = body
     const siteId = site_id
 
     // Normalize UTM parameters - use space for missing values
     const normalizedUtmSource = utm_source || ' '
     const normalizedUtmMedium = utm_medium || ' '
     const normalizedUtmCampaign = utm_campaign || ' '
-    const normalizedGclid = gclid || ' '
-    const normalizedFbclid = fbclid || ' '
 
-    // Create cache key from siteId and all 5 UTM parameters
-    const cacheKey = `content:${siteId}:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}:${normalizedGclid}:${normalizedFbclid}`
+    // Create cache key from siteId and UTM parameters
+    const cacheKey = `content:${siteId}:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}`
 
     // Try Redis cache for formatted content with manual JSON parsing for better performance
     const cachedRaw = await redis.get(cacheKey)
