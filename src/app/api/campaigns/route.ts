@@ -119,10 +119,8 @@ export async function POST(request: NextRequest) {
       const normalizedUtmSource = utmSource || ' '
       const normalizedUtmMedium = utmMedium || ' '
       const normalizedUtmCampaign = utmCampaign || ' '
-      const normalizedGclid = ' '
-      const normalizedFbclid = ' '
 
-      const contentKey = `content:${siteId}:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}:${normalizedGclid}:${normalizedFbclid}`
+      const contentKey = `content:${siteId}:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}`
 
       // Helper to extract text and styles for Redis
       const parseForRedis = (value: any) => {
@@ -258,10 +256,8 @@ export async function PUT(request: NextRequest) {
         const normalizedUtmSource = utmSource || ' '
         const normalizedUtmMedium = utmMedium || ' '
         const normalizedUtmCampaign = utmCampaign || ' '
-        const normalizedGclid = ' '
-        const normalizedFbclid = ' '
 
-        const contentKey = `content:${siteId}:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}:${normalizedGclid}:${normalizedFbclid}`
+        const contentKey = `content:${siteId}:${normalizedUtmSource}:${normalizedUtmMedium}:${normalizedUtmCampaign}`
 
         // Helper to extract text and styles for Redis
         const parseForRedis = (value: any) => {
