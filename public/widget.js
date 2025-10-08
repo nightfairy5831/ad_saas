@@ -222,7 +222,6 @@
             elements.forEach(targetElement => {
                 const oldText = targetElement.textContent || targetElement.innerHTML;
 
-                // Replace entire target element content with new structure
                 replaceTargetElement(targetElement, config.text, config.styles, config.type);
 
                 targetElement.classList.add('copyai-updated');
