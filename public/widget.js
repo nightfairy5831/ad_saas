@@ -8,8 +8,8 @@
     
     // Configuration
     const CONFIG = {
-        apiEndpoint: 'https://adfunnels-psi.vercel.app/api/v1/content',
-        eventEndpoint: 'https://adfunnels-psi.vercel.app/api/v1/event',
+        apiEndpoint: 'https://adfunnels-puce.vercel.app/api/v1/content',
+        eventEndpoint: 'https://adfunnels-puce.vercel.app/api/v1/event',
         debug: true
     };
 
